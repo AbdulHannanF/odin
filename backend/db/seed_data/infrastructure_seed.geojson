@@ -1,0 +1,204 @@
+{
+  "type": "FeatureCollection",
+  "name": "odin_infrastructure_seed",
+  "description": "Synthetic infrastructure assets for ODIN — power plants, substations, datacenters, hospitals, telecom towers, water treatment. All data is SYNTHETIC and does not represent real facilities.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "PLANT-001",
+        "name": "Coastal Power Plant Bravo",
+        "asset_type": "POWER_PLANT",
+        "status": "OPERATIONAL",
+        "risk_level": "NONE",
+        "risk_score": 0.0,
+        "capacity_mw": 800.0,
+        "voltage_kv": 345.0,
+        "country": "USA",
+        "region": "Northeast",
+        "operator": "SyntheticEnergy Corp",
+        "year_built": 1998
+      },
+      "geometry": { "type": "Point", "coordinates": [-73.949997, 40.650002] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "SUBST-001",
+        "name": "Northeast Grid Hub Alpha",
+        "asset_type": "SUBSTATION",
+        "status": "OPERATIONAL",
+        "risk_level": "NONE",
+        "risk_score": 0.0,
+        "capacity_mw": 500.0,
+        "voltage_kv": 138.0,
+        "country": "USA",
+        "region": "Northeast",
+        "operator": "SyntheticGrid LLC"
+      },
+      "geometry": { "type": "Point", "coordinates": [-74.005974, 40.712776] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "DC-001",
+        "name": "Atlantic Datacenter Delta",
+        "asset_type": "DATACENTER",
+        "status": "OPERATIONAL",
+        "risk_level": "NONE",
+        "risk_score": 0.0,
+        "country": "USA",
+        "region": "Northeast",
+        "operator": "SyntheticCloud Inc",
+        "metadata": { "servers": 12000, "uptime_sla": 0.9999 }
+      },
+      "geometry": { "type": "Point", "coordinates": [-73.935242, 40.730610] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "HOSP-001",
+        "name": "Metro General Hospital",
+        "asset_type": "HOSPITAL",
+        "status": "OPERATIONAL",
+        "risk_level": "NONE",
+        "risk_score": 0.0,
+        "country": "USA",
+        "region": "Northeast",
+        "metadata": { "beds": 850, "icu_beds": 120 }
+      },
+      "geometry": { "type": "Point", "coordinates": [-74.000000, 40.740000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "TCOM-001",
+        "name": "Northeast Telecom Hub",
+        "asset_type": "TELECOM_TOWER",
+        "status": "OPERATIONAL",
+        "risk_level": "NONE",
+        "risk_score": 0.0,
+        "country": "USA",
+        "region": "Northeast",
+        "operator": "SyntheticTel Corp"
+      },
+      "geometry": { "type": "Point", "coordinates": [-73.980000, 40.720000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "WATR-001",
+        "name": "Harbor Water Treatment Plant",
+        "asset_type": "WATER_TREATMENT",
+        "status": "OPERATIONAL",
+        "risk_level": "NONE",
+        "risk_score": 0.0,
+        "capacity_mw": 35.0,
+        "country": "USA",
+        "region": "Northeast",
+        "metadata": { "daily_capacity_mgd": 200 }
+      },
+      "geometry": { "type": "Point", "coordinates": [-74.030000, 40.670000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "PLANT-002",
+        "name": "Gulf Coast Gas Plant Epsilon",
+        "asset_type": "POWER_PLANT",
+        "status": "OPERATIONAL",
+        "risk_level": "MEDIUM",
+        "risk_score": 0.35,
+        "capacity_mw": 1200.0,
+        "voltage_kv": 500.0,
+        "country": "USA",
+        "region": "Gulf Coast",
+        "operator": "SyntheticEnergy Corp",
+        "year_built": 2005
+      },
+      "geometry": { "type": "Point", "coordinates": [-95.369804, 29.760427] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "SUBST-002",
+        "name": "Gulf Transmission Hub",
+        "asset_type": "SUBSTATION",
+        "status": "VULNERABLE",
+        "risk_level": "HIGH",
+        "risk_score": 0.72,
+        "capacity_mw": 600.0,
+        "voltage_kv": 345.0,
+        "country": "USA",
+        "region": "Gulf Coast",
+        "operator": "SyntheticGrid LLC"
+      },
+      "geometry": { "type": "Point", "coordinates": [-95.500000, 29.800000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "WIND-001",
+        "name": "North Sea Offshore Wind Farm Alpha",
+        "asset_type": "WIND_TURBINE",
+        "status": "OPERATIONAL",
+        "risk_level": "NONE",
+        "risk_score": 0.0,
+        "capacity_mw": 400.0,
+        "country": "UK",
+        "region": "North Sea",
+        "operator": "SyntheticWind Ltd",
+        "metadata": { "turbines": 80, "hub_height_m": 120 }
+      },
+      "geometry": { "type": "Point", "coordinates": [2.100000, 53.500000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "WIND-002",
+        "name": "Baltic Offshore Wind Farm Beta",
+        "asset_type": "WIND_TURBINE",
+        "status": "OPERATIONAL",
+        "risk_level": "NONE",
+        "risk_score": 0.0,
+        "capacity_mw": 350.0,
+        "country": "Germany",
+        "region": "Baltic Sea",
+        "operator": "SyntheticWind GmbH"
+      },
+      "geometry": { "type": "Point", "coordinates": [14.200000, 54.800000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "PLANT-003",
+        "name": "Yangtze River Hydro Dam",
+        "asset_type": "POWER_PLANT",
+        "status": "OPERATIONAL",
+        "risk_level": "LOW",
+        "risk_score": 0.15,
+        "capacity_mw": 18200.0,
+        "voltage_kv": 500.0,
+        "country": "China",
+        "region": "Hubei Province"
+      },
+      "geometry": { "type": "Point", "coordinates": [110.984671, 30.822798] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "SUBST-003",
+        "name": "Lagos Grid Interchange",
+        "asset_type": "SUBSTATION",
+        "status": "DEGRADED",
+        "risk_level": "HIGH",
+        "risk_score": 0.68,
+        "capacity_mw": 150.0,
+        "voltage_kv": 132.0,
+        "country": "Nigeria",
+        "region": "Lagos State"
+      },
+      "geometry": { "type": "Point", "coordinates": [3.379206, 6.524379] }
+    }
+  ]
+}

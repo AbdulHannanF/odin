@@ -1,0 +1,165 @@
+{
+  "type": "FeatureCollection",
+  "name": "odin_mineral_seed",
+  "description": "Synthetic mineral site data for ODIN — lithium, cobalt, copper, rare earth elements. All data is SYNTHETIC and does not represent real mining operations or reserve estimates.",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "mineral_id": "MIN-LI-001",
+        "mineral_type": "lithium",
+        "name": "Atacama Lithium Basin Alpha",
+        "estimated_reserves_mt": 9200000,
+        "country": "Chile",
+        "region": "Atacama Desert",
+        "geopolitical_risk": "MEDIUM",
+        "supply_chain_criticality": 0.92,
+        "active": true,
+        "ev_supply_percentage": 38.0,
+        "notes": "Critical for EV battery supply chains"
+      },
+      "geometry": { "type": "Point", "coordinates": [-68.200000, -23.500000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "mineral_id": "MIN-LI-002",
+        "mineral_type": "lithium",
+        "name": "Salta Lithium Salt Flats",
+        "estimated_reserves_mt": 4500000,
+        "country": "Argentina",
+        "region": "Salta Province",
+        "geopolitical_risk": "LOW",
+        "supply_chain_criticality": 0.78,
+        "active": true
+      },
+      "geometry": { "type": "Point", "coordinates": [-66.800000, -24.200000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "mineral_id": "MIN-LI-003",
+        "mineral_type": "lithium",
+        "name": "Pilbara Hard Rock Lithium",
+        "estimated_reserves_mt": 2800000,
+        "country": "Australia",
+        "region": "Western Australia",
+        "geopolitical_risk": "LOW",
+        "supply_chain_criticality": 0.85,
+        "active": true
+      },
+      "geometry": { "type": "Point", "coordinates": [117.500000, -22.000000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "mineral_id": "MIN-CO-001",
+        "mineral_type": "cobalt",
+        "name": "Katanga Cobalt Belt",
+        "estimated_reserves_mt": 3500000,
+        "country": "DRC",
+        "region": "Katanga Province",
+        "geopolitical_risk": "CRITICAL",
+        "supply_chain_criticality": 0.97,
+        "active": true,
+        "ev_supply_percentage": 65.0,
+        "notes": "Single largest cobalt source; extreme geopolitical instability"
+      },
+      "geometry": { "type": "Point", "coordinates": [26.700000, -10.900000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "mineral_id": "MIN-CO-002",
+        "mineral_type": "cobalt",
+        "name": "Zambia Copper Belt Cobalt",
+        "estimated_reserves_mt": 270000,
+        "country": "Zambia",
+        "region": "Copperbelt Province",
+        "geopolitical_risk": "MEDIUM",
+        "supply_chain_criticality": 0.65,
+        "active": true
+      },
+      "geometry": { "type": "Point", "coordinates": [27.800000, -12.500000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "mineral_id": "MIN-CU-001",
+        "mineral_type": "copper",
+        "name": "Chuquicamata Open Pit",
+        "estimated_reserves_mt": 53000000,
+        "country": "Chile",
+        "region": "Antofagasta Region",
+        "geopolitical_risk": "LOW",
+        "supply_chain_criticality": 0.82,
+        "active": true,
+        "notes": "One of the world's largest open-pit copper mines"
+      },
+      "geometry": { "type": "Point", "coordinates": [-68.908333, -22.315000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "mineral_id": "MIN-CU-002",
+        "mineral_type": "copper",
+        "name": "Grasberg Complex",
+        "estimated_reserves_mt": 15000000,
+        "country": "Indonesia",
+        "region": "Papua Province",
+        "geopolitical_risk": "HIGH",
+        "supply_chain_criticality": 0.75,
+        "active": true
+      },
+      "geometry": { "type": "Point", "coordinates": [137.100000, -4.050000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "mineral_id": "MIN-RE-001",
+        "mineral_type": "rare_earth",
+        "name": "Bayan Obo Rare Earth Complex",
+        "estimated_reserves_mt": 43000000,
+        "country": "China",
+        "region": "Inner Mongolia",
+        "geopolitical_risk": "HIGH",
+        "supply_chain_criticality": 0.94,
+        "active": true,
+        "ev_supply_percentage": 58.0,
+        "notes": "Dominant global source of rare earths for motors and magnets"
+      },
+      "geometry": { "type": "Point", "coordinates": [110.000000, 41.800000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "mineral_id": "MIN-NI-001",
+        "mineral_type": "nickel",
+        "name": "Sudbury Nickel Basin",
+        "estimated_reserves_mt": 6500000,
+        "country": "Canada",
+        "region": "Ontario",
+        "geopolitical_risk": "LOW",
+        "supply_chain_criticality": 0.72,
+        "active": true
+      },
+      "geometry": { "type": "Point", "coordinates": [-80.990000, 46.490000] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "mineral_id": "MIN-NI-002",
+        "mineral_type": "nickel",
+        "name": "Norilsk Nickel Complex",
+        "estimated_reserves_mt": 8200000,
+        "country": "Russia",
+        "region": "Krasnoyarsk Krai",
+        "geopolitical_risk": "CRITICAL",
+        "supply_chain_criticality": 0.88,
+        "active": true,
+        "notes": "Major disruption risk due to sanctions and geopolitical factors"
+      },
+      "geometry": { "type": "Point", "coordinates": [88.200000, 69.350000] }
+    }
+  ]
+}
