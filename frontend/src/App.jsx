@@ -11,15 +11,15 @@ import './index.css'
 
 // ── Static technology legend data ──────────────────────────────────────────
 const TECH_LEGEND = [
-  { key:'SOLAR',         label:'Solar',          color:'#f59e0b', count:15,  mw:5684  },
-  { key:'WIND',          label:'Wind',            color:'#84cc16', count:15,  mw:6268  },
-  { key:'OFFSHORE_WIND', label:'Offshore Wind',   color:'#06b6d4', count:2,   mw:1900  },
-  { key:'STORAGE',       label:'Storage',         color:'#ec4899', count:5,   mw:1450  },
-  { key:'HYDRO',         label:'Hydro',           color:'#38bdf8', count:5,   mw:12864 },
-  { key:'NUCLEAR',       label:'Nuclear',         color:'#22d3ee', count:6,   mw:17318 },
-  { key:'GAS',           label:'Gas',             color:'#c084fc', count:10,  mw:11015 },
-  { key:'COAL',          label:'Coal',            color:'#78716c', count:5,   mw:10260 },
-  { key:'GEOTHERMAL',    label:'Geothermal',      color:'#fb923c', count:3,   mw:1057  },
+  { key:'SOLAR',         label:'Solar',          color:'#f59e0b', count:50,  mw:21480 },
+  { key:'WIND',          label:'Wind',            color:'#84cc16', count:62,  mw:31840 },
+  { key:'OFFSHORE_WIND', label:'Offshore Wind',   color:'#06b6d4', count:5,   mw:3830  },
+  { key:'STORAGE',       label:'Storage',         color:'#ec4899', count:8,   mw:2450  },
+  { key:'HYDRO',         label:'Hydro',           color:'#38bdf8', count:42,  mw:48200 },
+  { key:'NUCLEAR',       label:'Nuclear',         color:'#22d3ee', count:28,  mw:77480 },
+  { key:'GAS',           label:'Gas',             color:'#c084fc', count:64,  mw:75600 },
+  { key:'COAL',          label:'Coal',            color:'#78716c', count:23,  mw:53900 },
+  { key:'GEOTHERMAL',    label:'Geothermal',      color:'#fb923c', count:7,   mw:1957  },
 ]
 
 const TRANSMISSION_LEGEND = [
@@ -159,6 +159,67 @@ function SubstationLegend() {
   )
 }
 
+function FiberLegend({ active, onToggle }) {
+  return (
+    <div className="ogw-section">
+      <div className="ogw-section-header" style={{ cursor:'pointer' }} onClick={onToggle}>
+        <span>Submarine Cables</span>
+        <span className="ogw-toggle-icon">{active ? '◉' : '○'}</span>
+      </div>
+      <div className="ogw-tx-row">
+        <div style={{ width:28, height:0, borderTop:'1.5px dashed #e879f9', flexShrink:0 }} />
+        <span className="ogw-tx-label">Fiber optic cable</span>
+      </div>
+      <div className="ogw-sub-row" style={{ marginTop:3 }}>
+        <div style={{ width:6, height:6, borderRadius:'50%', background:'#e879f9', flexShrink:0 }} />
+        <span className="ogw-sub-label">Cable landing point</span>
+      </div>
+    </div>
+  )
+}
+
+function PipelineLegend({ gasActive, oilActive, onGasToggle, onOilToggle }) {
+  return (
+    <div className="ogw-section">
+      <div className="ogw-section-header">
+        <span>Pipelines</span>
+        <span className="ogw-info-icon">ⓘ</span>
+      </div>
+      <div className="ogw-tx-row" style={{ cursor:'pointer' }} onClick={onGasToggle}>
+        <div style={{ width:28, height:0, borderTop:'1.5px dashed #f97316', flexShrink:0 }} />
+        <span className="ogw-tx-label" style={{ color: gasActive ? undefined : 'rgba(255,255,255,.3)' }}>Natural Gas {gasActive ? '◉' : '○'}</span>
+      </div>
+      <div className="ogw-tx-row" style={{ cursor:'pointer', marginTop:3 }} onClick={onOilToggle}>
+        <div style={{ width:28, height:2, background:'#ef4444', flexShrink:0, borderRadius:1 }} />
+        <span className="ogw-tx-label" style={{ color: oilActive ? undefined : 'rgba(255,255,255,.3)' }}>Crude Oil {oilActive ? '◉' : '○'}</span>
+      </div>
+    </div>
+  )
+}
+
+function OffshoreLegend({ active, onToggle }) {
+  return (
+    <div className="ogw-section">
+      <div className="ogw-section-header" style={{ cursor:'pointer' }} onClick={onToggle}>
+        <span>Offshore</span>
+        <span className="ogw-toggle-icon">{active ? '◉' : '○'}</span>
+      </div>
+      <div className="ogw-sub-row">
+        <div style={{ width:7, height:7, borderRadius:'50%', background:'#f59e0b', flexShrink:0 }} />
+        <span className="ogw-sub-label">Oil/Gas Platform</span>
+      </div>
+      <div className="ogw-sub-row" style={{ marginTop:3 }}>
+        <div style={{ width:7, height:7, borderRadius:'50%', background:'#fb923c', flexShrink:0 }} />
+        <span className="ogw-sub-label">LNG Facility</span>
+      </div>
+      <div className="ogw-sub-row" style={{ marginTop:3 }}>
+        <div style={{ width:7, height:7, borderRadius:'50%', background:'#06b6d4', flexShrink:0 }} />
+        <span className="ogw-sub-label">Offshore Wind</span>
+      </div>
+    </div>
+  )
+}
+
 function AlertIngest({ onResult }) {
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(false)
@@ -221,7 +282,7 @@ function AlertIngest({ onResult }) {
 
 function LeftPanel({ activeLayers, onLayerToggle, onResult }) {
   const [filtered, setFiltered] = useState(null)
-  const totalCount = TECH_LEGEND.reduce((s,t) => s+t.count, 0) + 20 + 10 + 3
+  const totalCount = TECH_LEGEND.reduce((s,t) => s+t.count, 0) + 75 + 10 + 3  // + substations + DCs + hospitals
   const totalGW = TECH_LEGEND.reduce((s,t) => s+t.mw, 0) / 1000
 
   const handleTechToggle = (key) => {
@@ -241,15 +302,15 @@ function LeftPanel({ activeLayers, onLayerToggle, onResult }) {
     <aside className="panel-left">
       {/* Title block */}
       <div className="ogw-title-block">
-        <div className="ogw-title">Infrastructure Assets</div>
+        <div className="ogw-title">North American Grid</div>
         <div className="ogw-subtitle">
-          <span className="ogw-count">{totalCount} assets</span>
+          <span className="ogw-count">{totalCount.toLocaleString()} assets</span>
           <span className="ogw-sep">|</span>
-          <span className="ogw-cap">{totalGW.toFixed(1)}GW capacity</span>
+          <span className="ogw-cap">{totalGW.toFixed(1)}GW</span>
         </div>
         <div className="ogw-status-row">
           <div className="ogw-status-dot OPERATIONAL" />
-          <span>Operating across 6 technology types</span>
+          <span>USA · Canada · Mexico · 9 technologies</span>
         </div>
       </div>
 
@@ -290,6 +351,21 @@ function LeftPanel({ activeLayers, onLayerToggle, onResult }) {
       />
       <SubstationLegend />
 
+      <FiberLegend
+        active={activeLayers.cables !== false}
+        onToggle={() => onLayerToggle('cables')}
+      />
+      <PipelineLegend
+        gasActive={activeLayers.gas !== false}
+        oilActive={activeLayers.oil !== false}
+        onGasToggle={() => onLayerToggle('gas')}
+        onOilToggle={() => onLayerToggle('oil')}
+      />
+      <OffshoreLegend
+        active={activeLayers.offshore !== false}
+        onToggle={() => onLayerToggle('offshore')}
+      />
+
       <AlertIngest onResult={onResult} />
     </aside>
   )
@@ -299,8 +375,11 @@ function LeftPanel({ activeLayers, onLayerToggle, onResult }) {
 function LayerControls({ activeLayers, onToggle }) {
   const layers = [
     ['infrastructure','⚡','INFRA'],
-    ['wind','💨','WIND'],
-    ['minerals','⛏','MINERALS'],
+    ['transmission','〰','TX'],
+    ['cables','〜','CABLES'],
+    ['gas','◌','GAS'],
+    ['oil','●','OIL'],
+    ['offshore','◆','OFFSHORE'],
   ]
   return (
     <div className="map-layer-controls">
@@ -396,7 +475,7 @@ function RightPanel({ currentTrace, beforeAfter, tickets, incidents, wsConnected
 
 // ── ROOT ───────────────────────────────────────────────────────────────────
 export default function App() {
-  const [activeLayers, setActiveLayers]   = useState({ infrastructure:true, wind:false, minerals:false, transmission:true })
+  const [activeLayers, setActiveLayers]   = useState({ infrastructure:true, wind:false, minerals:false, transmission:true, cables:true, gas:true, oil:true, offshore:true })
   const [selectedAsset, setSelectedAsset] = useState(null)
   const [queryResult, setQueryResult]     = useState(null)
   const [currentTrace, setCurrentTrace]   = useState(null)

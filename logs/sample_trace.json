@@ -1,0 +1,160 @@
+{
+  "run_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "timestamp": "2026-05-14T11:00:00.000Z",
+  "trigger": "unstructured_input",
+  "raw_input": "URGENT WEATHER ALERT: Category 4 hurricane is making landfall at the Gulf Coast within 18 hours. Sustained winds at 220 km/h. Major transmission corridors TX-44 and TX-12 are directly in the projected storm path. Datacenters serving financial institutions are at risk.",
+  "incident_id": "INC-A1B2C3D4",
+  "workplan": {
+    "goal": "Analyze infrastructure risk from unstructured input and execute protective interventions",
+    "steps": [
+      "1. Load infrastructure assets from PostGIS",
+      "2. Fetch weather alert and assess climate risk (ClimateAgent)",
+      "3. Identify highest-risk asset and simulate cascading failure (CascadeAgent)",
+      "4. Score and rank intervention options (DecisionAgent)",
+      "5. Execute chosen action via mock APIs (DispatchAgent)",
+      "6. Validate results and adjust confidence (ReflectionAgent)",
+      "7. Record before/after state and save trace"
+    ],
+    "agents_involved": ["ClimateAgent", "CascadeAgent", "DecisionAgent", "DispatchAgent", "ReflectionAgent"],
+    "estimated_duration_s": 15.0,
+    "generated_at": "2026-05-14T11:00:00.100Z"
+  },
+  "observations": [
+    { "key": "assets_loaded", "value": 12, "source": "PostGIS/seed", "timestamp": "2026-05-14T11:00:00.200Z" },
+    { "key": "region_detected", "value": { "min_lat": 25.0, "min_lon": -98.0, "max_lat": 31.0, "max_lon": -87.0 }, "source": "text_analysis", "timestamp": "2026-05-14T11:00:00.210Z" }
+  ],
+  "reasoning_steps": [
+    {
+      "agent": "ClimateAgent",
+      "step_index": 0,
+      "description": "Analyzed 12 assets. Found 4 at risk. Event: SEVERE_STORM. Economic stake: $892,480,000",
+      "input_data": { "asset_count": 12, "raw_text_length": 312 },
+      "output_data": { "affected_count": 4 },
+      "confidence": 0.85,
+      "duration_ms": 342,
+      "timestamp": "2026-05-14T11:00:00.550Z"
+    },
+    {
+      "agent": "CascadeAgent",
+      "step_index": 1,
+      "description": "Failure of 'Gulf Transmission Hub' cascades to 4 downstream assets. Intervention window: 15 min.",
+      "confidence": 0.82,
+      "duration_ms": 128,
+      "timestamp": "2026-05-14T11:00:00.680Z"
+    },
+    {
+      "agent": "DecisionAgent",
+      "step_index": 2,
+      "description": "Chosen action: OPT-HYBRID — Combined reroute + crew dispatch for maximum resilience coverage. Confidence: 0.91.",
+      "confidence": 0.91,
+      "duration_ms": 95,
+      "timestamp": "2026-05-14T11:00:00.775Z"
+    },
+    {
+      "agent": "DispatchAgent",
+      "step_index": 3,
+      "description": "Executed OPT-HYBRID: 3 tickets, 3 reroutes.",
+      "confidence": 0.91,
+      "duration_ms": 512,
+      "timestamp": "2026-05-14T11:00:01.290Z"
+    },
+    {
+      "agent": "ReflectionAgent",
+      "step_index": 4,
+      "description": "Trust level: MEDIUM. Issues: 1 (weather API fallback used). Adjusted confidence: 0.79.",
+      "confidence": 0.79,
+      "duration_ms": 45,
+      "timestamp": "2026-05-14T11:00:01.335Z"
+    }
+  ],
+  "decision_flow": {
+    "options": [
+      { "option_id": "OPT-HYBRID",  "description": "Combined reroute + crew dispatch for maximum resilience coverage", "score": 12.45, "economic_impact_usd": 803232000, "human_impact_score": 0.90, "resource_cost": 5.0, "confidence": 0.91 },
+      { "option_id": "OPT-REROUTE", "description": "Emergency reroute power flow away from vulnerable transmission corridor", "score": 9.87, "economic_impact_usd": 713984000, "human_impact_score": 0.75, "resource_cost": 2.0, "confidence": 0.87 },
+      { "option_id": "OPT-DISPATCH","description": "Dispatch emergency maintenance crews to highest-risk assets", "score": 5.32, "economic_impact_usd": 446240000, "human_impact_score": 0.60, "resource_cost": 3.5, "confidence": 0.82 },
+      { "option_id": "OPT-LOAD-SHED","description": "Controlled load shedding to protect critical infrastructure nodes", "score": 3.81, "economic_impact_usd": 267744000, "human_impact_score": 0.40, "resource_cost": 1.0, "confidence": 0.78 }
+    ],
+    "chosen_option_id": "OPT-HYBRID",
+    "rationale": "'Combined reroute + crew dispatch for maximum resilience coverage' selected with score 12.450. Urgency window: 15 min. Economic stake: $892,480,000. Human impact weight: 0.9.",
+    "confidence": 0.91
+  },
+  "tool_calls": [
+    {
+      "tool_name": "GridRerouteAPI",
+      "method": "PATCH",
+      "endpoint": "/mock/grid/reroute",
+      "payload": { "asset_id": "SUBST-002", "to_status": "REROUTED", "reason": "Automated reroute triggered by incident INC-A1B2C3D4" },
+      "response": { "command_id": "CMD-8FA3D2B1", "asset_id": "SUBST-002", "previous_status": "VULNERABLE", "new_status": "REROUTED", "success": true },
+      "status_code": 200,
+      "duration_ms": 145,
+      "success": true,
+      "timestamp": "2026-05-14T11:00:01.000Z"
+    },
+    {
+      "tool_name": "DispatchAPI",
+      "method": "POST",
+      "endpoint": "/mock/dispatch",
+      "payload": { "asset_id": "SUBST-002", "action_type": "EMERGENCY_INSPECTION", "priority": "CRITICAL" },
+      "response": { "ticket_id": "DISP-0042", "status": "DISPATCHED", "assigned_team": "ALPHA-RESPONSE-TEAM" },
+      "status_code": 200,
+      "duration_ms": 203,
+      "success": true,
+      "timestamp": "2026-05-14T11:00:01.200Z"
+    }
+  ],
+  "error_recovery": {
+    "triggered": true,
+    "agent": "ClimateAgent",
+    "reason": "Weather API unavailable or FORCE_WEATHER_API_FAILURE=true",
+    "fallback_strategy": "Load synthetic weather data from seed generator",
+    "fallback_data_source": "synthetic_fallback",
+    "degraded_mode": true,
+    "retry_count": 1,
+    "timestamp": "2026-05-14T11:00:00.420Z"
+  },
+  "before_states": [
+    { "asset_id": "SUBST-002", "status": "VULNERABLE", "risk_level": "HIGH", "risk_score": 0.72, "timestamp": "2026-05-14T11:00:01.000Z" }
+  ],
+  "after_states": [
+    { "asset_id": "SUBST-002", "status": "REROUTED", "risk_level": "LOW", "risk_score": 0.18, "timestamp": "2026-05-14T11:00:01.010Z" }
+  ],
+  "before_after": [
+    {
+      "asset_id": "SUBST-002",
+      "asset_name": "Gulf Transmission Hub",
+      "before": { "asset_id": "SUBST-002", "status": "VULNERABLE", "risk_level": "HIGH", "risk_score": 0.72, "timestamp": "2026-05-14T11:00:01.000Z" },
+      "after":  { "asset_id": "SUBST-002", "status": "REROUTED",   "risk_level": "LOW",  "risk_score": 0.18, "timestamp": "2026-05-14T11:00:01.010Z" },
+      "change_reason": "Automated reroute triggered by incident INC-A1B2C3D4",
+      "triggered_by": "DispatchAgent",
+      "ticket_id": "DISP-0042"
+    }
+  ],
+  "dispatch_tickets": [
+    {
+      "ticket_id": "DISP-0042",
+      "incident_id": "INC-A1B2C3D4",
+      "asset_id": "SUBST-002",
+      "action_type": "EMERGENCY_INSPECTION",
+      "priority": "CRITICAL",
+      "assigned_team": "ALPHA-RESPONSE-TEAM",
+      "instructions": "Inspect and assess damage at Gulf Transmission Hub. Storm impact imminent.",
+      "status": "DISPATCHED",
+      "created_at": "2026-05-14T11:00:01.200Z"
+    }
+  ],
+  "reroute_commands": [
+    {
+      "command_id": "CMD-8FA3D2B1",
+      "asset_id": "SUBST-002",
+      "from_status": "VULNERABLE",
+      "to_status": "REROUTED",
+      "reason": "Automated reroute triggered by incident INC-A1B2C3D4",
+      "executed_at": "2026-05-14T11:00:01.000Z",
+      "success": true
+    }
+  ],
+  "outcome_success": true,
+  "outcome_summary": "ODIN processed incident in 1388ms. Action: OPT-HYBRID. Assets affected: 4. Tickets: 3. Reroutes: 3. Final confidence: 0.79.",
+  "overall_confidence": 0.79,
+  "total_duration_ms": 1388
+}

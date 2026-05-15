@@ -5,7 +5,13 @@
       "Bash(node -e \"const pkg = require\\('./node_modules/maplibre-gl/package.json'\\); console.log\\(pkg.version\\)\")",
       "Bash(npm run *)",
       "Bash(Start-Sleep -Seconds 8)",
-      "Bash(Get-Content \"C:\\\\Users\\\\SARL\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-SARL-PyCharmMiscProject-ODIN\\\\5ecfd879-a0e6-4080-8364-70f945452cac\\\\tasks\\\\bw9se7t6s.output\" -Raw)"
+      "Bash(Get-Content \"C:\\\\Users\\\\SARL\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-SARL-PyCharmMiscProject-ODIN\\\\5ecfd879-a0e6-4080-8364-70f945452cac\\\\tasks\\\\bw9se7t6s.output\" -Raw)",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\SARL\\\\PyCharmMiscProject\\\\ODIN\\\\frontend\\\\src\\\\data\")",
+      "Bash(Out-Null)",
+      "Bash(Write-Output \"done\")",
+      "Bash(node --input-type=module)",
+      "Bash(node -e ' *)",
+      "Bash(timeout 60 npx vite build --minify false)"
     ]
   }
 }

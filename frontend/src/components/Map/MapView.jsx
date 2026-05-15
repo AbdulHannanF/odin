@@ -2,6 +2,11 @@ import React, { useEffect, useRef, useState, useCallback } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { getGridState, getWindVectors, getMineralsOverlay } from '../../api/odinApi.js'
+import { EXTENDED_INFRASTRUCTURE } from '../../data/infrastructure.js'
+import { EXTENDED_TRANSMISSION } from '../../data/transmission.js'
+import { SUBMARINE_CABLES, CABLE_LANDING_POINTS } from '../../data/submarine_cables.js'
+import { GAS_PIPELINES, OIL_PIPELINES } from '../../data/pipelines.js'
+import { OFFSHORE_PLATFORMS } from '../../data/offshore.js'
 
 const MAP_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
 
@@ -166,6 +171,16 @@ const TECH_COLOR = {
   GEOTHERMAL:'#fb923c', BIOMASS:'#a3e635',
 }
 
+// Merge embedded seed data with extended continental dataset
+const ALL_INFRA = {
+  type: 'FeatureCollection',
+  features: [...INFRASTRUCTURE_POINTS.features, ...EXTENDED_INFRASTRUCTURE.features],
+}
+const ALL_TRANSMISSION = {
+  type: 'FeatureCollection',
+  features: [...TRANSMISSION_LINES.features, ...EXTENDED_TRANSMISSION.features],
+}
+
 export default function MapView({ activeLayers, onAssetClick }) {
   const mapContainer = useRef(null)
   const mapRef       = useRef(null)
@@ -197,8 +212,179 @@ export default function MapView({ activeLayers, onAssetClick }) {
     })
 
     map.on('load', () => {
+      // ── Submarine cables ───────────────────────────────────────────
+      map.addSource('sub-cables', { type: 'geojson', data: SUBMARINE_CABLES })
+      map.addLayer({
+        id: 'sub-cables-glow',
+        type: 'line',
+        source: 'sub-cables',
+        paint: {
+          'line-color': '#e879f9',
+          'line-width': 4,
+          'line-opacity': 0.08,
+          'line-blur': 6,
+        },
+      })
+      map.addLayer({
+        id: 'sub-cables-line',
+        type: 'line',
+        source: 'sub-cables',
+        paint: {
+          'line-color': '#e879f9',
+          'line-width': 1.2,
+          'line-opacity': 0.55,
+          'line-dasharray': [4, 2],
+        },
+      })
+
+      // Cable landing points
+      map.addSource('cable-landings', { type: 'geojson', data: CABLE_LANDING_POINTS })
+      map.addLayer({
+        id: 'cable-landings',
+        type: 'circle',
+        source: 'cable-landings',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 2.5, 6, 4, 10, 6],
+          'circle-color': '#e879f9',
+          'circle-stroke-color': '#fff',
+          'circle-stroke-width': 0.8,
+          'circle-opacity': 0.85,
+        },
+      })
+
+      // ── Gas pipelines ──────────────────────────────────────────────
+      map.addSource('gas-pipes', { type: 'geojson', data: GAS_PIPELINES })
+      map.addLayer({
+        id: 'gas-pipes-glow',
+        type: 'line',
+        source: 'gas-pipes',
+        paint: {
+          'line-color': '#f97316',
+          'line-width': 5,
+          'line-opacity': 0.08,
+          'line-blur': 5,
+        },
+      })
+      map.addLayer({
+        id: 'gas-pipes-line',
+        type: 'line',
+        source: 'gas-pipes',
+        paint: {
+          'line-color': ['match', ['get', 'status'],
+            'VULNERABLE', '#ff4500', 'DEGRADED', '#ffd740', '#f97316'],
+          'line-width': 1,
+          'line-opacity': 0.6,
+          'line-dasharray': [6, 3],
+        },
+      })
+
+      // ── Oil pipelines ──────────────────────────────────────────────
+      map.addSource('oil-pipes', { type: 'geojson', data: OIL_PIPELINES })
+      map.addLayer({
+        id: 'oil-pipes-glow',
+        type: 'line',
+        source: 'oil-pipes',
+        paint: {
+          'line-color': '#dc2626',
+          'line-width': 5,
+          'line-opacity': 0.08,
+          'line-blur': 5,
+        },
+      })
+      map.addLayer({
+        id: 'oil-pipes-line',
+        type: 'line',
+        source: 'oil-pipes',
+        paint: {
+          'line-color': ['match', ['get', 'status'],
+            'VULNERABLE', '#ff1744', 'DEGRADED', '#ffd740', '#ef4444'],
+          'line-width': 1,
+          'line-opacity': 0.55,
+        },
+      })
+
+      // ── Offshore platforms ─────────────────────────────────────────
+      map.addSource('offshore', { type: 'geojson', data: OFFSHORE_PLATFORMS })
+      map.addLayer({
+        id: 'offshore-platforms',
+        type: 'circle',
+        source: 'offshore',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'],
+            2, ['match', ['get', 'platform_type'], 'OFFSHORE_WIND', 3, 2],
+            6, ['match', ['get', 'platform_type'], 'OFFSHORE_WIND', 6, 4],
+            10, ['match', ['get', 'platform_type'], 'OFFSHORE_WIND', 9, 6],
+          ],
+          'circle-color': ['match', ['get', 'platform_type'],
+            'OFFSHORE_WIND', '#06b6d4',
+            'LNG', '#fb923c',
+            '#f59e0b'],
+          'circle-stroke-color': ['match', ['get', 'status'],
+            'DEGRADED', '#ffd740', 'VULNERABLE', '#ff6d00', 'rgba(255,255,255,0.3)'],
+          'circle-stroke-width': ['match', ['get', 'status'],
+            'DEGRADED', 1.5, 'VULNERABLE', 1.5, 0.8],
+          'circle-opacity': ['match', ['get', 'status'], 'DECOMMISSIONING', 0.35, 0.82],
+        },
+      })
+
+      // Hover/click for new layers
+      for (const layerId of ['sub-cables-line', 'cable-landings', 'gas-pipes-line', 'oil-pipes-line', 'offshore-platforms']) {
+        map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer' })
+        map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = '' })
+      }
+
+      map.on('click', 'offshore-platforms', (e) => {
+        const f = e.features?.[0]
+        if (!f) return
+        const p = f.properties
+        const typeColor = p.platform_type === 'OFFSHORE_WIND' ? '#06b6d4' : p.platform_type === 'LNG' ? '#fb923c' : '#f59e0b'
+        popupRef.current.setLngLat(e.lngLat).setHTML(`
+          <div style="font-family:'IBM Plex Mono',monospace;padding:12px;min-width:180px">
+            <div style="font-size:9px;font-weight:700;color:${typeColor};letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px">${p.platform_type?.replace(/_/g,' ')}</div>
+            <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:6px">${p.name}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.5)">${p.operator} · ${p.country}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:4px">${p.status}</div>
+          </div>`).addTo(map)
+      })
+
+      map.on('click', 'cable-landings', (e) => {
+        const f = e.features?.[0]
+        if (!f) return
+        const p = f.properties
+        popupRef.current.setLngLat(e.lngLat).setHTML(`
+          <div style="font-family:'IBM Plex Mono',monospace;padding:12px;min-width:180px">
+            <div style="font-size:9px;font-weight:700;color:#e879f9;letter-spacing:.15em;margin-bottom:5px">CABLE LANDING POINT</div>
+            <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:6px">${p.name}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.5)">${p.country}</div>
+          </div>`).addTo(map)
+      })
+
+      map.on('click', 'gas-pipes-line', (e) => {
+        const f = e.features?.[0]
+        if (!f) return
+        const p = f.properties
+        popupRef.current.setLngLat(e.lngLat).setHTML(`
+          <div style="font-family:'IBM Plex Mono',monospace;padding:12px;min-width:180px">
+            <div style="font-size:9px;font-weight:700;color:#f97316;letter-spacing:.15em;margin-bottom:5px">GAS PIPELINE</div>
+            <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:6px">${p.name}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.5)">${p.operator} · ${p.status}</div>
+          </div>`).addTo(map)
+      })
+
+      map.on('click', 'oil-pipes-line', (e) => {
+        const f = e.features?.[0]
+        if (!f) return
+        const p = f.properties
+        popupRef.current.setLngLat(e.lngLat).setHTML(`
+          <div style="font-family:'IBM Plex Mono',monospace;padding:12px;min-width:180px">
+            <div style="font-size:9px;font-weight:700;color:#ef4444;letter-spacing:.15em;margin-bottom:5px">OIL PIPELINE</div>
+            <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:6px">${p.name}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.5)">${p.operator} · ${p.status}</div>
+          </div>`).addTo(map)
+      })
+
       // ── Transmission lines ─────────────────────────────────────────
-      map.addSource('tx-lines', { type: 'geojson', data: TRANSMISSION_LINES })
+      map.addSource('tx-lines', { type: 'geojson', data: ALL_TRANSMISSION })
       map.addLayer({
         id: 'tx-glow',
         type: 'line',
@@ -227,7 +413,7 @@ export default function MapView({ activeLayers, onAssetClick }) {
       })
 
       // ── Infrastructure points ──────────────────────────────────────
-      map.addSource('infra', { type: 'geojson', data: INFRASTRUCTURE_POINTS, generateId: true })
+      map.addSource('infra', { type: 'geojson', data: ALL_INFRA, generateId: true })
 
       // Pulse halo for at-risk assets
       map.addLayer({
@@ -327,7 +513,7 @@ export default function MapView({ activeLayers, onAssetClick }) {
       map.on('mouseenter','tx-lines', () => { map.getCanvas().style.cursor = 'pointer' })
       map.on('mouseleave','tx-lines', () => { map.getCanvas().style.cursor = '' })
 
-      const pointCount = INFRASTRUCTURE_POINTS.features.length
+      const pointCount = ALL_INFRA.features.length
       setAssetCount(pointCount)
       setStatus(`${pointCount} nodes loaded`)
       setMapReady(true)
@@ -368,7 +554,7 @@ export default function MapView({ activeLayers, onAssetClick }) {
         if (!src) return
         const merged = {
           type: 'FeatureCollection',
-          features: [...INFRASTRUCTURE_POINTS.features, ...geojson.features],
+          features: [...ALL_INFRA.features, ...geojson.features],
         }
         src.setData(merged)
         setAssetCount(merged.features.length)
@@ -385,10 +571,18 @@ export default function MapView({ activeLayers, onAssetClick }) {
       if (mapRef.current.getLayer(id))
         mapRef.current.setLayoutProperty(id, 'visibility', show ? 'visible' : 'none')
     }
-    vis('infra-circles',   activeLayers.infrastructure)
-    vis('infra-halo',      activeLayers.infrastructure)
-    vis('tx-lines',        activeLayers.transmission !== false)
-    vis('tx-glow',         activeLayers.transmission !== false)
+    vis('infra-circles',     activeLayers.infrastructure)
+    vis('infra-halo',        activeLayers.infrastructure)
+    vis('tx-lines',          activeLayers.transmission !== false)
+    vis('tx-glow',           activeLayers.transmission !== false)
+    vis('sub-cables-line',   activeLayers.cables !== false)
+    vis('sub-cables-glow',   activeLayers.cables !== false)
+    vis('cable-landings',    activeLayers.cables !== false)
+    vis('gas-pipes-line',    activeLayers.gas !== false)
+    vis('gas-pipes-glow',    activeLayers.gas !== false)
+    vis('oil-pipes-line',    activeLayers.oil !== false)
+    vis('oil-pipes-glow',    activeLayers.oil !== false)
+    vis('offshore-platforms',activeLayers.offshore !== false)
   }, [activeLayers, mapReady])
 
   return (
