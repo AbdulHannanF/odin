@@ -12,12 +12,12 @@ import DispatchScreen from './src/screens/DispatchScreen'
 const Tab = createBottomTabNavigator()
 
 const THEME = {
-  bg: '#060b18',
-  primary: '#00d4ff',
-  surface: '#0d1526',
-  border: 'rgba(0,212,255,0.15)',
-  text: '#e2e8f0',
-  muted: 'rgba(226,232,240,0.4)',
+  bg: '#080a0e',
+  primary: '#ffb300',
+  surface: '#0d1117',
+  border: 'rgba(255,179,0,0.15)',
+  text: 'rgba(255,255,255,0.88)',
+  muted: 'rgba(255,255,255,0.35)',
 }
 
 export default function App() {
@@ -38,7 +38,7 @@ export default function App() {
         screenOptions={({ route }) => ({
           tabBarIcon: ({ focused }) => {
             const icons = { Home: '⊕', Incidents: '⚠️', Chat: '🤖', Dispatch: '🎫' }
-            return <Text style={{ fontSize: 18, opacity: focused ? 1 : 0.5 }}>{icons[route.name]}</Text>
+            return <Text style={{ fontSize: 18, opacity: focused ? 1 : 0.5, color: focused ? THEME.primary : THEME.muted }}>{icons[route.name]}</Text>
           },
           tabBarActiveTintColor: THEME.primary,
           tabBarInactiveTintColor: THEME.muted,
@@ -49,9 +49,9 @@ export default function App() {
             height: 60,
             paddingBottom: 8,
           },
-          tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
+          tabBarLabelStyle: { fontSize: 10, fontWeight: '700', letterSpacing: 1, fontFamily: 'monospace' },
           headerStyle: { backgroundColor: THEME.surface, borderBottomColor: THEME.border, borderBottomWidth: 1 },
-          headerTitleStyle: { color: THEME.primary, fontWeight: '800', fontSize: 16, letterSpacing: 2 },
+          headerTitleStyle: { color: THEME.primary, fontWeight: '800', fontSize: 16, letterSpacing: 2, fontFamily: 'monospace' },
         })}
       >
         <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'ODIN', headerTitle: 'ODIN ⊕' }} />
