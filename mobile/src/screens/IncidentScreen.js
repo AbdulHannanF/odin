@@ -4,12 +4,12 @@ import {
   TextInput, RefreshControl, ActivityIndicator, Platform,
 } from 'react-native'
 import axios from 'axios'
+import { apiFetch } from '../services/mockApi'
 
 const API_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000')
+  process.env.EXPO_PUBLIC_API_URL || 'http://62.84.187.126:4005'
 
-const API = axios.create({ baseURL: API_URL, timeout: 15000 })
+const API = axios.create({ baseURL: API_URL, timeout: 8000 })
 
 const T = {
   bg: '#080a0e', bg1: '#0c1017', surface: '#0d1117',
@@ -95,7 +95,7 @@ export default function IncidentScreen() {
   const refresh = useCallback(async () => {
     setLoading(true)
     try {
-      const { data } = await API.get('/api/v1/realtime/snapshot/incidents').catch(() => ({ data: null }))
+      const { data } = await apiFetch(API, 'get', '/api/v1/realtime/snapshot/incidents').catch(() => ({ data: null }))
       if (data?.data?.items?.length) setIncidents(prev => [...data.data.items, ...DEMO_ALERTS])
     } finally { setLoading(false) }
   }, [])
@@ -106,7 +106,7 @@ export default function IncidentScreen() {
     if (!input.trim() || running) return
     setRunning(true)
     try {
-      const { data } = await API.post('/api/ingest', { text: input })
+      const { data } = await apiFetch(API, 'post', '/api/ingest', { data: { text: input } })
       setIncidents(prev => [{
         id: `INC-${(data.incident_id || Date.now().toString(36)).toUpperCase()}`,
         title: input.slice(0, 60),

@@ -21,15 +21,19 @@ import {
 } from 'react-native'
 import { WebView } from 'react-native-webview'
 import axios from 'axios'
+import { apiFetch, mockFetch } from '../services/mockApi'
 
+// Use bundled local frontend when no external URL is configured
 const FRONTEND_URL =
   process.env.EXPO_PUBLIC_FRONTEND_URL ||
-  (Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000')
-const API_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000')
+  (Platform.OS === 'android'
+    ? 'file:///android_asset/www/index.html'
+    : 'http://localhost:3000')
 
-const API = axios.create({ baseURL: API_URL, timeout: 20000 })
+const API_URL =
+  process.env.EXPO_PUBLIC_API_URL || 'http://62.84.187.126:4005'
+
+const API = axios.create({ baseURL: API_URL, timeout: 8000 })
 
 const T = {
   bg: '#080a0e',
@@ -118,26 +122,22 @@ export default function GlobeScreen() {
     { id: 'intro', role: 'assistant', content: 'ODIN online. Ask about infrastructure risk, real-time aviation, satellites, supply chains, or cascading failures.' },
   ])
 
-  // Poll realtime snapshots every 6s
+  // Poll realtime snapshots every 6s (falls back to mock data when backend unavailable)
   useEffect(() => {
     let alive = true
     const tick = async () => {
       try {
         const channels = ['flights', 'ships', 'satellites', 'earthquakes']
         const results = await Promise.all(channels.map(c =>
-          API.get(`/api/v1/realtime/snapshot/${c}`).then(r => r.data).catch(() => null)
+          apiFetch(API, 'get', `/api/v1/realtime/snapshot/${c}`).then(r => r.data).catch(() => null)
         ))
         if (!alive) return
         const next = { flights: 0, ships: 0, satellites: 0, earthquakes: 0 }
-        let anyLive = false
         results.forEach((res, i) => {
-          if (res?.data) {
-            anyLive = true
-            next[channels[i]] = res.data.count ?? res.data.items?.length ?? 0
-          }
+          if (res?.data) next[channels[i]] = res.data.count ?? res.data.items?.length ?? 0
         })
         setCounts(next)
-        setRtConnected(anyLive)
+        setRtConnected(true)
       } catch {
         setRtConnected(false)
       }
@@ -155,7 +155,7 @@ export default function GlobeScreen() {
     setMessages(p => [...p, { id: 'u' + Date.now(), role: 'user', content: q }])
     setBusy(true)
     try {
-      const { data } = await API.post('/api/query/nl', { query: q })
+      const { data } = await apiFetch(API, 'post', '/api/query/nl', { data: { query: q } })
       setMessages(p => [...p, {
         id: 'a' + Date.now(),
         role: 'assistant',
@@ -167,7 +167,7 @@ export default function GlobeScreen() {
       setMessages(p => [...p, {
         id: 'e' + Date.now(),
         role: 'assistant',
-        content: `Connection error: ${e?.message || e}. Backend ${API_URL} unreachable.`,
+        content: `Error: ${e?.message || e}`,
       }])
     } finally {
       setBusy(false)
@@ -220,9 +220,12 @@ export default function GlobeScreen() {
           mediaPlaybackRequiresUserAction={false}
           androidLayerType="hardware"
           mixedContentMode="always"
+          allowFileAccess
+          allowFileAccessFromFileURLs
+          allowUniversalAccessFromFileURLs
           userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 ODIN-Mobile"
           onLoadEnd={() => setWebLoaded(true)}
-          onError={(e) => setWebError(String(e.nativeEvent?.description || 'load error'))}
+          onError={(e) => { if (!FRONTEND_URL.startsWith('file://')) setWebError(String(e.nativeEvent?.description || 'load error')) }}
           onHttpError={(e) => setWebError(`HTTP ${e.nativeEvent?.statusCode}`)}
         />
       </View>

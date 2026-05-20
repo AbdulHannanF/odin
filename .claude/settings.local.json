@@ -11,7 +11,9 @@
       "Bash(Write-Output \"done\")",
       "Bash(node --input-type=module)",
       "Bash(node -e ' *)",
-      "Bash(timeout 60 npx vite build --minify false)"
+      "Bash(timeout 60 npx vite build --minify false)",
+      "PowerShell(Invoke-RestMethod \"http://127.0.0.1:8000/api/v1/layers\" | ConvertTo-Json -Depth 3)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/v1/layers/__TRACKED_VAR__)"
     ]
   }
 }

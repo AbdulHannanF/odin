@@ -4,12 +4,12 @@ import {
   TextInput, ActivityIndicator, Platform, RefreshControl,
 } from 'react-native'
 import axios from 'axios'
+import { apiFetch } from '../services/mockApi'
 
 const API_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000')
+  process.env.EXPO_PUBLIC_API_URL || 'http://62.84.187.126:4005'
 
-const API = axios.create({ baseURL: API_URL, timeout: 15000 })
+const API = axios.create({ baseURL: API_URL, timeout: 8000 })
 
 const T = {
   bg: '#080a0e', bg1: '#0c1017', surface: '#0d1117',
@@ -53,7 +53,8 @@ export default function HomeScreen() {
   const load = useCallback(async (type) => {
     setLoading(true); setFeatures([]); setPage(0)
     try {
-      const { data } = await API.get(ASSET_TYPES.find(t => t.key === type).endpoint)
+      const endpoint = ASSET_TYPES.find(t => t.key === type).endpoint
+      const { data } = await apiFetch(API, 'get', endpoint)
       setFeatures(data.features || [])
     } catch { setFeatures([]) }
     finally { setLoading(false) }

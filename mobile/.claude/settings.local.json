@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-Command *)",
+      "PowerShell($env:ANDROID_HOME = \"C:\\\\Users\\\\ajsar\\\\AppData\\\\Local\\\\Android\\\\Sdk\"; Set-Location \"C:\\\\Users\\\\ajsar\\\\odin\\\\mobile\\\\android\"; .\\\\gradlew.bat clean 2>&1 | Select-Object -Last 20)",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\ajsar\\\\odin\\\\mobile\\\\android\"; $env:ANDROID_HOME = \"C:\\\\Users\\\\ajsar\\\\AppData\\\\Local\\\\Android\\\\Sdk\"; .\\\\gradlew.bat assembleRelease 2>&1)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\ajsar\\\\odin\\\\mobile\\\\android\"; $env:ANDROID_HOME = \"C:\\\\Users\\\\ajsar\\\\AppData\\\\Local\\\\Android\\\\Sdk\"; .\\\\gradlew.bat assembleRelease -PkotlinJvmTarget=17 -Pkotlin.jvm.target=17 2>&1 | Select-Object -Last 50)",
+      "Bash(xargs grep -l \"jvmTarget\\\\|JavaVersion\")",
+      "Bash(/c/Program Files/Android/Android Studio/jbr/bin/java.exe *)",
+      "PowerShell(New-Item *)",
+      "PowerShell(Remove-Item *)",
+      "PowerShell(winget search *)",
+      "PowerShell(winget install *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell($env:ANDROID_HOME = \"C:\\\\Users\\\\ajsar\\\\AppData\\\\Local\\\\Android\\\\Sdk\"; $env:JAVA_HOME = \"C:\\\\Users\\\\ajsar\\\\jdk17\"; Set-Location \"C:\\\\Users\\\\ajsar\\\\odin\\\\mobile\\\\android\"; .\\\\gradlew.bat assembleRelease 2>&1)"
+    ]
+  }
+}

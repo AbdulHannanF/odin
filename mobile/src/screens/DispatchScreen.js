@@ -4,12 +4,12 @@ import {
   RefreshControl, Platform,
 } from 'react-native'
 import axios from 'axios'
+import { apiFetch } from '../services/mockApi'
 
 const API_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  (Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000')
+  process.env.EXPO_PUBLIC_API_URL || 'http://62.84.187.126:4005'
 
-const API = axios.create({ baseURL: API_URL, timeout: 15000 })
+const API = axios.create({ baseURL: API_URL, timeout: 8000 })
 
 const T = {
   bg: '#080a0e', bg1: '#0c1017', surface: '#0d1117',
@@ -98,7 +98,7 @@ export default function DispatchScreen() {
   const refresh = useCallback(async () => {
     setLoading(true)
     try {
-      const { data } = await API.get('/api/v1/realtime/snapshot/agents').catch(() => ({ data: null }))
+      const { data } = await apiFetch(API, 'get', '/api/v1/realtime/snapshot/agents').catch(() => ({ data: null }))
       if (data?.data?.items?.length) {
         setTickets([...data.data.items.map(t => ({ ...t, status: t.status || 'PENDING' })), ...DEMO_TICKETS])
       }
