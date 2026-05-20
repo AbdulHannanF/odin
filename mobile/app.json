@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ODIN Mobile",
+    "name": "ODIN",
     "slug": "odin-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,20 +11,30 @@
       "resizeMode": "contain",
       "backgroundColor": "#060b18"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.odin.mobile"
     },
     "android": {
+      "package": "com.odin.mobile",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#060b18"
-      }
+      },
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "odin-mobile"
+      }
     }
   }
 }

@@ -1,100 +1,185 @@
-import React, { useState, useEffect } from 'react'
-import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native'
+import React, { useEffect, useState, useCallback } from 'react'
+import {
+  View, Text, StyleSheet, FlatList, TouchableOpacity,
+  RefreshControl, Platform,
+} from 'react-native'
 import axios from 'axios'
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.100:8000'
-const API = axios.create({ baseURL: API_URL, timeout: 10000 })
-const THEME = { bg: '#080a0e', surface: '#0d1117', elevated: '#121922', primary: '#ffb300', text: 'rgba(255,255,255,0.88)', muted: 'rgba(255,255,255,0.35)', border: 'rgba(255,255,255,0.12)' }
-const PRIO_COLORS = { CRITICAL: '#ef4444', HIGH: '#f97316', MEDIUM: '#f59e0b', LOW: '#84cc16' }
+const API_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
+  (Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000')
 
-export default function DispatchScreen() {
-  const [tickets, setTickets] = useState([])
-  const [gridStates, setGridStates] = useState([])
-  const [refreshing, setRefreshing] = useState(false)
-  const [tab, setTab] = useState('tickets')
+const API = axios.create({ baseURL: API_URL, timeout: 15000 })
 
-  const load = async () => {
-    try {
-      const [t, g] = await Promise.all([
-        API.get('/mock/dispatch').then(r => r.data.tickets || []),
-        API.get('/mock/grid/states').then(r => r.data.states || []),
-      ])
-      setTickets(t)
-      setGridStates(g)
-    } catch {
-      setTickets([])
-      setGridStates([])
-    } finally {
-      setRefreshing(false)
-    }
-  }
+const T = {
+  bg: '#080a0e', bg1: '#0c1017', surface: '#0d1117',
+  primary: '#3b82f6', cyan: '#00d4ff', green: '#00e676',
+  red: '#ff5252', orange: '#ff6d00', yellow: '#ffd740',
+  border: 'rgba(255,255,255,0.10)', text: 'rgba(255,255,255,0.88)',
+  muted: 'rgba(255,255,255,0.40)',
+}
 
-  useEffect(() => { load() }, [])
+const ACTION_COLORS = {
+  REROUTE: '#00d4ff', LOAD_SHED: '#ff6d00', ISOLATE: '#ff5252',
+  MONITOR: '#3b82f6', NOTIFY: '#ffd740', EVACUATE: '#e879f9', NO_ACTION: 'rgba(255,255,255,0.4)',
+}
 
+const STATUS_COLORS = {
+  PENDING: '#ffd740', ACTIVE: '#00e676', SENT: '#3b82f6', RESOLVED: 'rgba(255,255,255,0.4)', CANCELLED: '#ff5252',
+}
+
+const DEMO_TICKETS = [
+  { id: 'TKT-0001', action: 'REROUTE',   asset: 'TX-44 Corridor',           reason: 'Hurricane path — pre-emptive load transfer to TX-55 backup corridor.', confidence: 0.92, status: 'PENDING', created: new Date(Date.now() - 1800000) },
+  { id: 'TKT-0002', action: 'MONITOR',   asset: 'Grid Hub Alpha',            reason: 'Voltage fluctuation ±15% — enhanced monitoring every 30s.',             confidence: 0.84, status: 'ACTIVE',  created: new Date(Date.now() - 3600000) },
+  { id: 'TKT-0003', action: 'NOTIFY',    asset: 'Northeast Datacenters',     reason: 'Hurricane advisory issued. On-call engineers alerted.',                  confidence: 0.78, status: 'SENT',    created: new Date(Date.now() - 7200000) },
+  { id: 'TKT-0004', action: 'LOAD_SHED', asset: 'Gulf Coast Substations',    reason: 'Storm landfall T-18h. Non-critical load shed to protect critical infra.', confidence: 0.71, status: 'PENDING', created: new Date(Date.now() - 9000000) },
+]
+
+function StatsBar({ tickets }) {
+  const pending  = tickets.filter(t => t.status === 'PENDING').length
+  const active   = tickets.filter(t => t.status === 'ACTIVE').length
+  const resolved = tickets.filter(t => t.status === 'RESOLVED' || t.status === 'SENT').length
   return (
-    <ScrollView style={s.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load() }} tintColor={THEME.primary} />}>
-      <View style={{ padding: 16, paddingBottom: 8 }}>
-        <Text style={{ fontSize: 16, fontWeight: '800', color: THEME.primary, fontFamily: 'monospace' }}>▶ DISPATCH CENTER</Text>
-      </View>
-
-      {/* Tabs */}
-      <View style={s.tabs}>
-        {[['tickets', `TICKETS (${tickets.length})`], ['grid', `STATE CHANGES (${gridStates.length})`]].map(([t_key, label]) => (
-          <TouchableOpacity key={t_key} style={[s.tab, tab === t_key && s.tabActive]} onPress={() => setTab(t_key)}>
-            <Text style={[s.tabText, tab === t_key && { color: THEME.primary }]}>{label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {tab === 'tickets' && (
-        tickets.length === 0
-          ? <Text style={s.empty}>NO DISPATCH TICKETS. RUN PIPELINE.</Text>
-          : tickets.map(t => (
-            <View key={t.ticket_id} style={[s.card, { borderLeftColor: PRIO_COLORS[t.priority] || THEME.border }]}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={{ fontFamily: 'monospace', fontSize: 11, color: THEME.primary, fontWeight: '700' }}>{t.ticket_id}</Text>
-                <View style={[s.badge, { backgroundColor: t.status === 'DISPATCHED' ? 'rgba(255,179,0,.15)' : 'rgba(249,115,22,.15)' }]}>
-                  <Text style={{ fontSize: 9, color: t.status === 'DISPATCHED' ? THEME.primary : '#f97316', fontWeight: '700', fontFamily: 'monospace' }}>{t.status}</Text>
-                </View>
-              </View>
-              <Text style={s.cardTitle}>{t.action_type.toUpperCase()} · {t.asset_name || t.asset_id}</Text>
-              <Text style={{ fontSize: 9, color: THEME.muted, marginTop: 6, fontFamily: 'monospace', letterSpacing: .5 }}>
-                TEAM: {t.assigned_team} · PRIORITY: <Text style={{ color: PRIO_COLORS[t.priority] || THEME.text }}>{t.priority}</Text>
-              </Text>
-              {t.instructions && <Text style={{ fontSize: 11, color: 'rgba(255,255,255,.6)', marginTop: 8, lineHeight: 18, fontFamily: 'monospace' }}>{t.instructions}</Text>}
-            </View>
-          ))
-      )}
-
-      {tab === 'grid' && (
-        gridStates.length === 0
-          ? <Text style={s.empty}>NO STATE CHANGES. RUN PIPELINE.</Text>
-          : gridStates.map((g, i) => (
-            <View key={i} style={[s.card, { borderLeftColor: '#00e5ff' }]}>
-              <Text style={{ fontSize: 11, color: THEME.primary, fontWeight: '700', marginBottom: 8, fontFamily: 'monospace' }}>{g.asset_id}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#f97316', fontFamily: 'monospace' }}>{g.previous_status || '—'}</Text>
-                <Text style={{ color: THEME.primary, fontSize: 16 }}>→</Text>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#00e5ff', fontFamily: 'monospace' }}>{g.status}</Text>
-              </View>
-              <Text style={{ fontSize: 10, color: THEME.muted, marginTop: 8, fontFamily: 'monospace' }}>{g.reason}</Text>
-              <Text style={{ fontSize: 9, color: 'rgba(255,255,255,.2)', marginTop: 4, fontFamily: 'monospace' }}>{g.last_updated}</Text>
-            </View>
-          ))
-      )}
-      <View style={{ height: 20 }} />
-    </ScrollView>
+    <View style={S.statsBar}>
+      {[[pending, 'PENDING', STATUS_COLORS.PENDING], [active, 'ACTIVE', STATUS_COLORS.ACTIVE], [resolved, 'RESOLVED', STATUS_COLORS.RESOLVED]].map(([n, label, color]) => (
+        <View key={label} style={S.stat}>
+          <Text style={[S.statNum, { color }]}>{n}</Text>
+          <Text style={S.statLabel}>{label}</Text>
+        </View>
+      ))}
+    </View>
   )
 }
 
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: THEME.bg },
-  tabs: { flexDirection: 'row', marginHorizontal: 12, marginBottom: 12, backgroundColor: THEME.surface, padding: 4, borderWidth: 1, borderColor: THEME.border },
-  tab: { flex: 1, paddingVertical: 8, alignItems: 'center' },
-  tabActive: { backgroundColor: 'rgba(255,179,0,.1)' },
-  tabText: { fontSize: 10, fontWeight: '700', color: THEME.muted, fontFamily: 'monospace', letterSpacing: 1 },
-  card: { marginHorizontal: 12, marginBottom: 8, backgroundColor: THEME.surface, padding: 14, borderWidth: 1, borderColor: THEME.border, borderLeftWidth: 3 },
-  cardTitle: { fontSize: 13, fontWeight: '700', color: THEME.text, fontFamily: 'monospace' },
-  badge: { paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: 'rgba(255,255,255,.05)' },
-  empty: { textAlign: 'center', color: THEME.muted, marginTop: 40, fontSize: 11, paddingHorizontal: 24, fontFamily: 'monospace', letterSpacing: 1 },
+function TicketCard({ item, onApprove, onDismiss }) {
+  const actionColor = ACTION_COLORS[item.action] || T.muted
+  const statusColor = STATUS_COLORS[item.status] || T.muted
+  const dt = item.created instanceof Date ? item.created : new Date(item.created)
+  const ago = Math.round((Date.now() - dt) / 60000)
+  const agoStr = ago < 60 ? `${ago}m ago` : `${Math.round(ago / 60)}h ago`
+
+  return (
+    <View style={[S.card, { borderLeftColor: actionColor }]}>
+      <View style={S.cardTop}>
+        <Text style={[S.action, { color: actionColor }]}>{item.action}</Text>
+        <View style={[S.statusBadge, { borderColor: statusColor }]}>
+          <Text style={[S.statusText, { color: statusColor }]}>{item.status}</Text>
+        </View>
+        <Text style={S.time}>{agoStr}</Text>
+      </View>
+      <Text style={S.ticketId}>{item.id}</Text>
+      <Text style={S.asset}>→ {item.asset}</Text>
+      <Text style={S.reason}>{item.reason}</Text>
+      <View style={S.confRow}>
+        <View style={S.confBar}>
+          <View style={[S.confFill, { width: `${Math.round(item.confidence * 100)}%`, backgroundColor: actionColor }]} />
+        </View>
+        <Text style={[S.confPct, { color: actionColor }]}>{Math.round(item.confidence * 100)}%</Text>
+      </View>
+      {item.status === 'PENDING' && (
+        <View style={S.actions}>
+          <TouchableOpacity style={[S.btn, { borderColor: T.green }]} onPress={() => onApprove(item.id)}>
+            <Text style={[S.btnText, { color: T.green }]}>✓ APPROVE</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[S.btn, { borderColor: T.red }]} onPress={() => onDismiss(item.id)}>
+            <Text style={[S.btnText, { color: T.red }]}>✕ DISMISS</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
+  )
+}
+
+export default function DispatchScreen() {
+  const [tickets, setTickets] = useState(DEMO_TICKETS)
+  const [loading, setLoading] = useState(false)
+  const [filter, setFilter]   = useState('ALL')
+
+  const refresh = useCallback(async () => {
+    setLoading(true)
+    try {
+      const { data } = await API.get('/api/v1/realtime/snapshot/agents').catch(() => ({ data: null }))
+      if (data?.data?.items?.length) {
+        setTickets([...data.data.items.map(t => ({ ...t, status: t.status || 'PENDING' })), ...DEMO_TICKETS])
+      }
+    } finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => { refresh() }, [])
+
+  const approve = useCallback((id) => setTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'ACTIVE' } : t)), [])
+  const dismiss = useCallback((id) => setTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'CANCELLED' } : t)), [])
+
+  const FILTERS = ['ALL', 'PENDING', 'ACTIVE', 'RESOLVED']
+  const displayed = filter === 'ALL' ? tickets
+    : tickets.filter(t => t.status === filter || (filter === 'RESOLVED' && (t.status === 'SENT' || t.status === 'RESOLVED')))
+
+  return (
+    <View style={S.root}>
+      <StatsBar tickets={tickets} />
+      <View style={S.filterRow}>
+        {FILTERS.map(f => (
+          <TouchableOpacity
+            key={f}
+            style={[S.filterPill, filter === f && { backgroundColor: T.primary, borderColor: T.primary }]}
+            onPress={() => setFilter(f)}
+          >
+            <Text style={[S.filterText, filter === f && { color: '#fff' }]}>{f}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <FlatList
+        data={displayed}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => <TicketCard item={item} onApprove={approve} onDismiss={dismiss} />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor={T.primary} />}
+        contentContainerStyle={{ padding: 10, paddingBottom: 30 }}
+        ListEmptyComponent={
+          <View style={S.empty}>
+            <Text style={S.emptyText}>◈ NO DISPATCH TICKETS</Text>
+            <Text style={S.emptyHint}>Run a pipeline from Incidents to generate tickets.</Text>
+          </View>
+        }
+      />
+    </View>
+  )
+}
+
+const S = StyleSheet.create({
+  root: { flex: 1, backgroundColor: T.bg },
+  statsBar: {
+    flexDirection: 'row', backgroundColor: T.bg1,
+    borderBottomWidth: 1, borderBottomColor: T.border, padding: 10,
+  },
+  stat: { flex: 1, alignItems: 'center' },
+  statNum: { fontFamily: 'monospace', fontSize: 20, fontWeight: '800' },
+  statLabel: { color: T.muted, fontFamily: 'monospace', fontSize: 7, letterSpacing: 1.5, marginTop: 2 },
+  filterRow: {
+    flexDirection: 'row', gap: 6, paddingHorizontal: 10, paddingVertical: 8,
+    backgroundColor: T.bg1, borderBottomWidth: 1, borderBottomColor: T.border,
+  },
+  filterPill: { paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: T.border },
+  filterText: { color: T.muted, fontFamily: 'monospace', fontSize: 9, fontWeight: '700', letterSpacing: 1 },
+  card: {
+    backgroundColor: T.surface, borderWidth: 1, borderColor: T.border,
+    borderLeftWidth: 3, padding: 12, marginBottom: 6,
+  },
+  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  action: { fontFamily: 'monospace', fontSize: 9, fontWeight: '800', letterSpacing: 1.4 },
+  statusBadge: { borderWidth: 1, paddingHorizontal: 6, paddingVertical: 1 },
+  statusText: { fontFamily: 'monospace', fontSize: 7, fontWeight: '700', letterSpacing: 1 },
+  time: { color: T.muted, fontFamily: 'monospace', fontSize: 8, marginLeft: 'auto' },
+  ticketId: { color: T.muted, fontFamily: 'monospace', fontSize: 9, marginBottom: 2 },
+  asset: { color: T.text, fontFamily: 'monospace', fontSize: 11, fontWeight: '700', marginBottom: 4 },
+  reason: { color: 'rgba(255,255,255,0.55)', fontFamily: 'monospace', fontSize: 9, lineHeight: 14, marginBottom: 8 },
+  confRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  confBar: { flex: 1, height: 2, backgroundColor: 'rgba(255,255,255,0.08)', overflow: 'hidden' },
+  confFill: { height: '100%' },
+  confPct: { fontFamily: 'monospace', fontSize: 9, fontWeight: '700', minWidth: 32 },
+  actions: { flexDirection: 'row', gap: 8 },
+  btn: { flex: 1, borderWidth: 1, alignItems: 'center', paddingVertical: 7 },
+  btnText: { fontFamily: 'monospace', fontSize: 9, fontWeight: '800', letterSpacing: 1 },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, gap: 10 },
+  emptyText: { color: T.primary, fontFamily: 'monospace', fontSize: 10, letterSpacing: 2 },
+  emptyHint: { color: T.muted, fontFamily: 'monospace', fontSize: 9, textAlign: 'center', maxWidth: 260 },
 })
