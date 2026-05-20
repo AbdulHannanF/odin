@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback } from 'react'
 import { View, Text, TextInput, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native'
 import axios from 'axios'
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.100:8000'
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://62.84.187.126:4005'
 const API = axios.create({ baseURL: API_URL, timeout: 20000 })
 const THEME = { bg: '#080a0e', surface: '#0d1117', elevated: '#121922', primary: '#ffb300', text: 'rgba(255,255,255,0.88)', muted: 'rgba(255,255,255,0.35)', border: 'rgba(255,255,255,0.12)' }
 

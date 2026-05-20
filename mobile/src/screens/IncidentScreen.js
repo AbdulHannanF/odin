@@ -23,17 +23,6 @@ const SEV_COLOR = {
   CRITICAL: '#ff5252', HIGH: '#ff6d00', MEDIUM: '#ffd740', LOW: '#00e676',
 }
 
-const DEMO_ALERTS = [
-  { id: 'DEMO-001', title: 'Cat-4 Hurricane — Gulf Coast', severity: 'CRITICAL',
-    summary: 'TX-44 and TX-12 in direct storm path. Datacenter cascade risk high.',
-    type: 'WEATHER', time: new Date(Date.now() - 3600000) },
-  { id: 'DEMO-002', title: 'DRC Cobalt Export Moratorium', severity: 'HIGH',
-    summary: 'Affects 65% global cobalt supply. EV and datacenter battery backups at risk.',
-    type: 'SUPPLY', time: new Date(Date.now() - 7200000) },
-  { id: 'DEMO-003', title: 'Grid Hub Alpha — Voltage Fluctuation', severity: 'HIGH',
-    summary: '±15% beyond nominal. Three hospitals and one major datacenter on same feeder.',
-    type: 'SENSOR', time: new Date(Date.now() - 14400000) },
-]
 
 function IncidentCard({ item, onPress }) {
   const color = SEV_COLOR[item.severity] || T.muted
@@ -86,7 +75,7 @@ function DetailModal({ item, onClose }) {
 }
 
 export default function IncidentScreen() {
-  const [incidents, setIncidents] = useState(DEMO_ALERTS)
+  const [incidents, setIncidents] = useState([])
   const [selected, setSelected]   = useState(null)
   const [loading, setLoading]     = useState(false)
   const [input, setInput]         = useState('')
@@ -96,7 +85,7 @@ export default function IncidentScreen() {
     setLoading(true)
     try {
       const { data } = await apiFetch(API, 'get', '/api/v1/realtime/snapshot/incidents').catch(() => ({ data: null }))
-      if (data?.data?.items?.length) setIncidents(prev => [...data.data.items, ...DEMO_ALERTS])
+      if (data?.data?.items?.length) setIncidents(data.data.items)
     } finally { setLoading(false) }
   }, [])
 
@@ -117,12 +106,12 @@ export default function IncidentScreen() {
         confidence: data.confidence,
       }, ...prev])
       setInput('')
-    } catch {
+    } catch (err) {
       setIncidents(prev => [{
         id: 'ERR-' + Date.now(),
         title: 'Pipeline error',
         severity: 'MEDIUM',
-        summary: 'Backend unreachable — running in demo mode.',
+        summary: `Backend error: ${err?.message || 'unreachable'}`,
         type: 'ERROR',
         time: new Date(),
       }, ...prev])

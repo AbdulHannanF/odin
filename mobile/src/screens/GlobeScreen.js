@@ -21,7 +21,7 @@ import {
 } from 'react-native'
 import { WebView } from 'react-native-webview'
 import axios from 'axios'
-import { apiFetch, mockFetch } from '../services/mockApi'
+import { apiFetch } from '../services/mockApi'
 
 // Use bundled local frontend when no external URL is configured
 const FRONTEND_URL =

@@ -28,12 +28,6 @@ const STATUS_COLORS = {
   PENDING: '#ffd740', ACTIVE: '#00e676', SENT: '#3b82f6', RESOLVED: 'rgba(255,255,255,0.4)', CANCELLED: '#ff5252',
 }
 
-const DEMO_TICKETS = [
-  { id: 'TKT-0001', action: 'REROUTE',   asset: 'TX-44 Corridor',           reason: 'Hurricane path — pre-emptive load transfer to TX-55 backup corridor.', confidence: 0.92, status: 'PENDING', created: new Date(Date.now() - 1800000) },
-  { id: 'TKT-0002', action: 'MONITOR',   asset: 'Grid Hub Alpha',            reason: 'Voltage fluctuation ±15% — enhanced monitoring every 30s.',             confidence: 0.84, status: 'ACTIVE',  created: new Date(Date.now() - 3600000) },
-  { id: 'TKT-0003', action: 'NOTIFY',    asset: 'Northeast Datacenters',     reason: 'Hurricane advisory issued. On-call engineers alerted.',                  confidence: 0.78, status: 'SENT',    created: new Date(Date.now() - 7200000) },
-  { id: 'TKT-0004', action: 'LOAD_SHED', asset: 'Gulf Coast Substations',    reason: 'Storm landfall T-18h. Non-critical load shed to protect critical infra.', confidence: 0.71, status: 'PENDING', created: new Date(Date.now() - 9000000) },
-]
 
 function StatsBar({ tickets }) {
   const pending  = tickets.filter(t => t.status === 'PENDING').length
@@ -91,7 +85,7 @@ function TicketCard({ item, onApprove, onDismiss }) {
 }
 
 export default function DispatchScreen() {
-  const [tickets, setTickets] = useState(DEMO_TICKETS)
+  const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(false)
   const [filter, setFilter]   = useState('ALL')
 
@@ -100,7 +94,7 @@ export default function DispatchScreen() {
     try {
       const { data } = await apiFetch(API, 'get', '/api/v1/realtime/snapshot/agents').catch(() => ({ data: null }))
       if (data?.data?.items?.length) {
-        setTickets([...data.data.items.map(t => ({ ...t, status: t.status || 'PENDING' })), ...DEMO_TICKETS])
+        setTickets(data.data.items.map(t => ({ ...t, status: t.status || 'PENDING' })))
       }
     } finally { setLoading(false) }
   }, [])
