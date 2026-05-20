@@ -17,7 +17,8 @@
       "Bash(npx expo *)",
       "Bash(gradlew.bat assembleDebug)",
       "Bash(Get-Content \"C:\\\\Users\\\\ajsar\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-ajsar-odin-mobile\\\\35c4a283-06d0-4284-83a4-623d6b311b4e\\\\tasks\\\\brihwd1pj.output\" -Wait)",
-      "Bash(Select-String -Pattern \"BUILD SUCCESSFUL|BUILD FAILED|FAILURE|error:|Exception|assembleDebug\" --SimpleMatch)"
+      "Bash(Select-String -Pattern \"BUILD SUCCESSFUL|BUILD FAILED|FAILURE|error:|Exception|assembleDebug\" --SimpleMatch)",
+      "Bash(node -e \"const e=require\\('./node_modules/expo/package.json'\\); console.log\\('Expo SDK:', e.version\\)\")"
     ]
   }
 }
