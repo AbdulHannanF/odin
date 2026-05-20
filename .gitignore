@@ -3,9 +3,9 @@ node_modules/
 dist/
 build/
 .npm/
-.playwright-mcp
-docs
-data-cache
+.playwright-mcp/
+docs/
+data-cache/
 # Python
 __pycache__/
 *.py[cod]
