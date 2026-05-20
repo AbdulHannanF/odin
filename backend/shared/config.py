@@ -54,13 +54,19 @@ class Settings(BaseSettings):
     # ── Redis ───────────────────────────────────────────────────
     redis_url: str = Field("redis://localhost:6379", env="REDIS_URL")
 
+    # ── Real-time data sources (optional keys) ──────────────────
+    aisstream_api_key: str = Field("", env="AISSTREAM_API_KEY")
+    firms_map_key: str = Field("", env="FIRMS_MAP_KEY")
+
     # ── Feature Flags ────────────────────────────────────────────
     use_synthetic_weather: bool = Field(True, env="USE_SYNTHETIC_WEATHER")
     use_synthetic_grid: bool = Field(False, env="USE_SYNTHETIC_GRID")
     force_weather_api_failure: bool = Field(False, env="FORCE_WEATHER_API_FAILURE")
+    enable_realtime_workers: bool = Field(True, env="ENABLE_REALTIME_WORKERS")
 
     class Config:
-        env_file = ".env"
+        # Resolve .env relative to the repo root regardless of cwd.
+        env_file = str((Path(__file__).resolve().parent.parent.parent / ".env"))
         env_file_encoding = "utf-8"
         extra = "ignore"
 

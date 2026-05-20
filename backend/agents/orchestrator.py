@@ -304,20 +304,49 @@ class ODINOrchestrator:
                 "confidence": final_confidence,
             }
 
+    async def _classify_query(self, query: str) -> dict[str, Any]:
+        """LLM-powered intent classifier with keyword fallback."""
+        from shared.gemini import generate_json, is_available
+        if is_available():
+            system = (
+                "You are ODIN's natural-language router. Map the user's geospatial query to "
+                "ONE intent and extract any region. Intents: WIND, MINERAL, VULNERABILITY, "
+                "INFRASTRUCTURE, GENERAL. Region is a free-text string or null."
+            )
+            schema = '{"intent": "WIND|MINERAL|VULNERABILITY|INFRASTRUCTURE|GENERAL", "region": "string|null", "minerals": ["lithium"|"cobalt"|...] }'
+            prompt = f"Query: {query!r}\nReply with this JSON schema only:\n{schema}"
+            data = await generate_json(prompt, system=system)
+            if data.get("intent"):
+                return data
+        q = query.lower()
+        if "wind" in q or "turbine" in q or "offshore" in q:
+            return {"intent": "WIND", "region": None}
+        if "mineral" in q or "lithium" in q or "cobalt" in q or "supply chain" in q:
+            return {"intent": "MINERAL", "region": None,
+                    "minerals": [m for m in ("lithium", "cobalt") if m in q]}
+        if "vulnerable" in q or "flood" in q or "risk" in q:
+            return {"intent": "VULNERABILITY", "region": None}
+        return {"intent": "GENERAL", "region": None}
+
     async def run_nl_query(self, query: str) -> dict[str, Any]:
         """
         Answer a natural language geospatial query.
-        Routes to appropriate agents based on query content.
+        Uses Gemini for intent + answer when available, falls back to keywords.
         """
-        q = query.lower()
+        from shared.gemini import generate, is_available
         async with ODINLogger(TriggerType.NL_QUERY, query) as tracer:
             tracer.set_workplan(
                 goal=f"Answer: '{query}'",
-                steps=["1. Classify query intent", "2. Route to relevant agent", "3. Format response with GeoJSON overlay"],
+                steps=["1. Classify query intent (Gemini if available)", "2. Route to relevant agent", "3. Generate final answer"],
                 agents=[AgentName.ORCHESTRATOR],
             )
 
-            if "wind" in q or "turbine" in q or "offshore" in q:
+            classification = await self._classify_query(query)
+            intent = classification.get("intent", "GENERAL")
+            tracer.add_observation("intent", intent, source="gemini" if is_available() else "keyword")
+            q = query.lower()
+
+            if intent == "WIND" or "wind" in q or "turbine" in q or "offshore" in q:
                 assets = await self._load_assets()
                 bounds = {"min_lat": 30.0, "max_lat": 65.0, "min_lon": -15.0, "max_lon": 40.0}
                 result = await self.wind_agent.analyze(assets, bounds)
@@ -334,8 +363,10 @@ class ODINOrchestrator:
                     "data_sources": ["synthetic_wind_grid", "seed_turbines"],
                     "confidence": 0.80,
                 }
-            elif "mineral" in q or "lithium" in q or "cobalt" in q or "supply chain" in q:
+            elif intent == "MINERAL" or "mineral" in q or "lithium" in q or "cobalt" in q or "supply chain" in q:
                 mineral = "lithium" if "lithium" in q else ("cobalt" if "cobalt" in q else None)
+                if not mineral and classification.get("minerals"):
+                    mineral = classification["minerals"][0]
                 result = await self.resource_agent.analyze(mineral)
                 tracer.add_reasoning_step(AgentName.RESOURCE, "Mineral supply chain analysis", confidence=0.88)
                 tracer.set_outcome(True, "Resource analysis complete", 0.88)
@@ -350,7 +381,7 @@ class ODINOrchestrator:
                     "data_sources": ["mineral_seed.geojson"],
                     "confidence": 0.88,
                 }
-            elif "vulnerable" in q or "flood" in q or "risk" in q:
+            elif intent == "VULNERABILITY" or "vulnerable" in q or "flood" in q or "risk" in q:
                 assets = await self._load_assets()
                 result = await self.climate_agent.analyze(query, assets)
                 tracer.add_reasoning_step(AgentName.CLIMATE, "Vulnerability query", confidence=0.82)
@@ -365,11 +396,29 @@ class ODINOrchestrator:
                     "confidence": 0.82,
                 }
             else:
-                tracer.set_outcome(True, "Generic query answered", 0.60)
+                # No specialist agent matched — let Gemini answer directly,
+                # constrained to ODIN's domain.
+                answer = ""
+                if is_available():
+                    system = (
+                        "You are ODIN, an autonomous planetary infrastructure intelligence "
+                        "platform. You answer concisely (≤ 3 sentences) about power grids, "
+                        "submarine cables, pipelines, data centers, wind/solar/nuclear, "
+                        "aviation, satellites, earthquakes, and supply chains. If the question "
+                        "is out of scope, say so and suggest a related ODIN capability."
+                    )
+                    answer = await generate(query, system=system, temperature=0.3, timeout_s=10)
+                if not answer:
+                    answer = (
+                        "ODIN can analyze: wind resources, mineral supply chains, infrastructure "
+                        "vulnerability, transmission failures, and economic impact. Please refine "
+                        "your query."
+                    )
+                tracer.set_outcome(True, "Generic query answered", 0.65)
                 return {
                     "query": query,
-                    "answer": "ODIN can analyze: wind resources, mineral supply chains, infrastructure vulnerability, transmission failures, and economic impact. Please refine your query.",
+                    "answer": answer,
                     "geojson": None,
-                    "data_sources": [],
-                    "confidence": 0.60,
+                    "data_sources": (["gemini"] if is_available() and answer else []),
+                    "confidence": 0.65 if is_available() else 0.55,
                 }

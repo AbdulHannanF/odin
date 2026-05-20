@@ -1,0 +1,61 @@
+{
+  "run_id": "2f66765b-1f83-4b47-b1f2-ebc5bf5d21ca",
+  "timestamp": "2026-05-19T16:48:29.943598",
+  "trigger": "nl_query",
+  "raw_input": "Best regions for offshore wind expansion?",
+  "incident_id": null,
+  "workplan": {
+    "goal": "Answer: 'Best regions for offshore wind expansion?'",
+    "steps": [
+      "1. Classify query intent (Gemini if available)",
+      "2. Route to relevant agent",
+      "3. Generate final answer"
+    ],
+    "estimated_duration_s": null,
+    "agents_involved": [
+      "Orchestrator"
+    ],
+    "generated_at": "2026-05-19T16:48:29.944038"
+  },
+  "observations": [
+    {
+      "key": "intent",
+      "value": "WIND",
+      "source": "gemini",
+      "timestamp": "2026-05-19T16:48:39.870330"
+    }
+  ],
+  "reasoning_steps": [
+    {
+      "agent": "WindAgent",
+      "step_index": 0,
+      "description": "Wind analysis for NL query",
+      "input_data": null,
+      "output_data": null,
+      "confidence": 0.8,
+      "duration_ms": null,
+      "timestamp": "2026-05-19T16:48:43.960169"
+    }
+  ],
+  "decision_flow": null,
+  "tool_calls": [],
+  "error_recovery": {
+    "triggered": false,
+    "agent": null,
+    "reason": null,
+    "fallback_strategy": null,
+    "fallback_data_source": null,
+    "degraded_mode": false,
+    "retry_count": 0,
+    "timestamp": null
+  },
+  "before_states": [],
+  "after_states": [],
+  "before_after": [],
+  "dispatch_tickets": [],
+  "reroute_commands": [],
+  "outcome_success": true,
+  "outcome_summary": "Wind analysis complete",
+  "overall_confidence": 0.8,
+  "total_duration_ms": 14017
+}

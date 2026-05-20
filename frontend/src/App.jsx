@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { Toaster, toast } from 'react-hot-toast'
 import MapView from './components/Map/MapView.jsx'
 import NLQueryBar from './components/NLQuery/NLQueryBar.jsx'
@@ -6,35 +6,40 @@ import AgentReasoningPanel from './components/AgentPanel/AgentReasoningPanel.jsx
 import BeforeAfterPanel from './components/BeforeAfter/BeforeAfterPanel.jsx'
 import IncidentFeed from './components/IncidentFeed/IncidentFeed.jsx'
 import { useWebSocket } from './hooks/useWebSocket.js'
+import { useRealtime } from './hooks/useRealtime.js'
 import { ingestText, getAgentTrace } from './api/odinApi.js'
+import { startSatelliteWorker } from './services/satelliteService.js'
 import './index.css'
 
-// ── Static technology legend data ──────────────────────────────────────────
+// ── Static technology legend data (counts from WRI global DB, 34 936 plants) ──
 const TECH_LEGEND = [
-  { key:'SOLAR',         label:'Solar',          color:'#f59e0b', count:50,  mw:21480 },
-  { key:'WIND',          label:'Wind',            color:'#84cc16', count:62,  mw:31840 },
-  { key:'OFFSHORE_WIND', label:'Offshore Wind',   color:'#06b6d4', count:5,   mw:3830  },
-  { key:'STORAGE',       label:'Storage',         color:'#ec4899', count:8,   mw:2450  },
-  { key:'HYDRO',         label:'Hydro',           color:'#38bdf8', count:42,  mw:48200 },
-  { key:'NUCLEAR',       label:'Nuclear',         color:'#22d3ee', count:28,  mw:77480 },
-  { key:'GAS',           label:'Gas',             color:'#c084fc', count:64,  mw:75600 },
-  { key:'COAL',          label:'Coal',            color:'#78716c', count:23,  mw:53900 },
-  { key:'GEOTHERMAL',    label:'Geothermal',      color:'#fb923c', count:7,   mw:1957  },
+  { key:'SOLAR',          label:'Solar',          color:'#FFD700', count:10665 },
+  { key:'HYDRO',          label:'Hydro',          color:'#0077FF', count:7156  },
+  { key:'WIND',           label:'Wind',           color:'#00E5FF', count:5344  },
+  { key:'GAS',            label:'Gas',            color:'#FF8C00', count:3998  },
+  { key:'COAL',           label:'Coal',           color:'#8B7355', count:2330  },
+  { key:'OIL',            label:'Oil',            color:'#FF4422', count:2320  },
+  { key:'BIOMASS',        label:'Biomass',        color:'#66BB44', count:1430  },
+  { key:'WASTE',          label:'Waste',          color:'#AABB00', count:1068  },
+  { key:'NUCLEAR',        label:'Nuclear',        color:'#CC44FF', count:195   },
+  { key:'GEOTHERMAL',     label:'Geothermal',     color:'#FF6633', count:189   },
+  { key:'STORAGE',        label:'Storage',        color:'#FF44AA', count:135   },
+  { key:'COGENERATION',   label:'Cogeneration',   color:'#FFAA33', count:41    },
 ]
 
 const TRANSMISSION_LEGEND = [
-  { label:'735kV+',    color:'#00e5ff', width:3 },
-  { label:'500–734kV', color:'#22d3ee', width:2.5 },
-  { label:'345–499kV', color:'#38bdf8', width:2 },
-  { label:'230–344kV', color:'#818cf8', width:1.5 },
-  { label:'138–229kV', color:'#a78bfa', width:1 },
+  { label:'735kV+',    color:'#FFFFFF', width:3 },
+  { label:'500–734kV', color:'#00D4FF', width:2.5 },
+  { label:'345–499kV', color:'#4488EE', width:2 },
+  { label:'230–344kV', color:'#7766CC', width:1.5 },
+  { label:'138–229kV', color:'#AA88DD', width:1 },
 ]
 
 const SUBSTATION_LEGEND = [
-  { label:'500+ kV', size:9, color:'#22d3ee' },
-  { label:'345–499 kV', size:7, color:'#38bdf8' },
-  { label:'230–344 kV', size:5.5, color:'#818cf8' },
-  { label:'<230 kV', size:4, color:'#a78bfa' },
+  { label:'500+ kV', size:9, color:'#00E5FF' },
+  { label:'345–499 kV', size:7, color:'#4499FF' },
+  { label:'230–344 kV', size:5.5, color:'#8866FF' },
+  { label:'<230 kV', size:4, color:'#BB99FF' },
 ]
 
 const DEMO_ALERTS = [
@@ -49,7 +54,7 @@ function fmtMW(mw) {
 }
 
 // ── HEADER ────────────────────────────────────────────────────────────────
-function Header({ wsConnected, agentCount }) {
+function Header({ wsConnected, rtConnected, agentCount, rtCounts, satellite, onSatelliteToggle }) {
   const [time, setTime] = useState(new Date())
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000)
@@ -60,12 +65,12 @@ function Header({ wsConnected, agentCount }) {
       <div className="header-logo">
         <div className="header-logo-mark">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <circle cx="9" cy="9" r="7.5" stroke="#ffb300" strokeWidth="1"/>
-            <circle cx="9" cy="9" r="3" fill="#ffb300"/>
-            <line x1="9" y1="0" x2="9" y2="4" stroke="#ffb300" strokeWidth="1"/>
-            <line x1="9" y1="14" x2="9" y2="18" stroke="#ffb300" strokeWidth="1"/>
-            <line x1="0" y1="9" x2="4" y2="9" stroke="#ffb300" strokeWidth="1"/>
-            <line x1="14" y1="9" x2="18" y2="9" stroke="#ffb300" strokeWidth="1"/>
+            <circle cx="9" cy="9" r="7.5" stroke="#3b82f6" strokeWidth="1"/>
+            <circle cx="9" cy="9" r="3" fill="#3b82f6"/>
+            <line x1="9" y1="0" x2="9" y2="4" stroke="#3b82f6" strokeWidth="1"/>
+            <line x1="9" y1="14" x2="9" y2="18" stroke="#3b82f6" strokeWidth="1"/>
+            <line x1="0" y1="9" x2="4" y2="9" stroke="#3b82f6" strokeWidth="1"/>
+            <line x1="14" y1="9" x2="18" y2="9" stroke="#3b82f6" strokeWidth="1"/>
           </svg>
         </div>
         <div>
@@ -77,9 +82,29 @@ function Header({ wsConnected, agentCount }) {
         <div className="status-badge"><div className="status-dot" />OPERATIONAL</div>
         <div className="agent-badge">◈ {agentCount} AGENTS ACTIVE</div>
         <div className="header-divider" />
+        <div className="rt-counter" title="Live flights (OpenSky)">
+          <span className="rt-dot rt-dot-amber" /> ✈ {rtCounts.flights ?? 0}
+        </div>
+        <div className="rt-counter" title="Live vessels (AIS)">
+          <span className="rt-dot rt-dot-cyan" /> ⚓ {rtCounts.ships ?? 0}
+        </div>
+        <div className="rt-counter" title="Active satellites (CelesTrak)">
+          <span className="rt-dot rt-dot-lime" /> ☉ {rtCounts.satellites ?? 0}
+        </div>
+        <div className="rt-counter" title="Earthquakes / 24h (USGS)">
+          <span className="rt-dot rt-dot-red" /> ▲ {rtCounts.earthquakes ?? 0}
+        </div>
+        <div className="header-divider" />
+        <button
+          className={`basemap-btn ${satellite ? 'active' : ''}`}
+          onClick={onSatelliteToggle}
+          title="Toggle satellite imagery underlay"
+        >
+          {satellite ? 'SAT' : 'DARK'}
+        </button>
         <div className="ws-badge">
-          <div className="ws-dot" style={{ background: wsConnected ? 'var(--green)' : 'var(--muted)' }} />
-          {wsConnected ? 'STREAM LIVE' : 'STREAM OFFLINE'}
+          <div className="ws-dot" style={{ background: (wsConnected && rtConnected) ? 'var(--green)' : 'var(--muted)' }} />
+          {rtConnected ? 'STREAM LIVE' : 'STREAM OFFLINE'}
         </div>
         <div className="header-time">{time.toISOString().replace('T',' ').slice(0,19)} UTC</div>
       </div>
@@ -98,7 +123,6 @@ function TechRow({ item, filtered, onToggle }) {
       <div className="ogw-tech-dot" style={{ background: item.color }} />
       <span className="ogw-tech-label">{item.label}</span>
       <span className="ogw-tech-count">{item.count.toLocaleString()}</span>
-      <span className="ogw-tech-mw">{fmtMW(item.mw)}</span>
     </div>
   )
 }
@@ -282,8 +306,7 @@ function AlertIngest({ onResult }) {
 
 function LeftPanel({ activeLayers, onLayerToggle, onResult }) {
   const [filtered, setFiltered] = useState(null)
-  const totalCount = TECH_LEGEND.reduce((s,t) => s+t.count, 0) + 75 + 10 + 3  // + substations + DCs + hospitals
-  const totalGW = TECH_LEGEND.reduce((s,t) => s+t.mw, 0) / 1000
+  const totalCount = TECH_LEGEND.reduce((s,t) => s+t.count, 0) + 39904 + 1382  // + substations + DCs
 
   const handleTechToggle = (key) => {
     setFiltered(prev => {
@@ -302,15 +325,15 @@ function LeftPanel({ activeLayers, onLayerToggle, onResult }) {
     <aside className="panel-left">
       {/* Title block */}
       <div className="ogw-title-block">
-        <div className="ogw-title">North American Grid</div>
+        <div className="ogw-title">Global Infrastructure</div>
         <div className="ogw-subtitle">
           <span className="ogw-count">{totalCount.toLocaleString()} assets</span>
           <span className="ogw-sep">|</span>
-          <span className="ogw-cap">{totalGW.toFixed(1)}GW</span>
+          <span className="ogw-cap">34,936 plants</span>
         </div>
         <div className="ogw-status-row">
           <div className="ogw-status-dot OPERATIONAL" />
-          <span>USA · Canada · Mexico · 9 technologies</span>
+          <span>Global · 52K TX lines · 40K substations</span>
         </div>
       </div>
 
@@ -374,12 +397,15 @@ function LeftPanel({ activeLayers, onLayerToggle, onResult }) {
 // ── MAP OVERLAYS ───────────────────────────────────────────────────────────
 function LayerControls({ activeLayers, onToggle }) {
   const layers = [
-    ['infrastructure','⚡','INFRA'],
-    ['transmission','〰','TX'],
-    ['cables','〜','CABLES'],
-    ['gas','◌','GAS'],
-    ['oil','●','OIL'],
-    ['offshore','◆','OFFSHORE'],
+    ['infrastructure', '⚡', 'PLANTS'],
+    ['transmission',   '〰', 'GRID'],
+    ['datacenters',    '◆', 'DATA CTRS'],
+    ['cables',         '〜', 'CABLES'],
+    ['flights',        '✈', 'FLIGHTS'],
+    ['ships',          '⚓', 'SHIPS'],
+    ['satellites',     '☉', 'SATS'],
+    ['earthquakes',    '▲', 'QUAKES'],
+    ['wildfires',      '※', 'FIRES'],
   ]
   return (
     <div className="map-layer-controls">
@@ -475,7 +501,13 @@ function RightPanel({ currentTrace, beforeAfter, tickets, incidents, wsConnected
 
 // ── ROOT ───────────────────────────────────────────────────────────────────
 export default function App() {
-  const [activeLayers, setActiveLayers]   = useState({ infrastructure:true, wind:false, minerals:false, transmission:true, cables:true, gas:true, oil:true, offshore:true })
+  const [activeLayers, setActiveLayers]   = useState({
+    infrastructure:true, wind:false, minerals:false,
+    transmission:true, cables:true, gas:true, oil:true, offshore:true,
+    datacenters:true,
+    flights:true, ships:true, satellites:false, earthquakes:true, wildfires:true,
+  })
+  const globeRef = useRef(null)
   const [selectedAsset, setSelectedAsset] = useState(null)
   const [queryResult, setQueryResult]     = useState(null)
   const [currentTrace, setCurrentTrace]   = useState(null)
@@ -483,7 +515,48 @@ export default function App() {
   const [tickets, setTickets]             = useState([])
   const [incidents, setIncidents]         = useState([])
   const [rightTab, setRightTab]           = useState('reasoning')
+  const [satellite, setSatellite]         = useState(false)
   const { isConnected, messages }         = useWebSocket('/ws/incidents')
+  const { connected: rtConnected, streams: rtStreams } = useRealtime()
+
+  const realtimePayload = {
+    flights:     rtStreams.flights?.data,
+    ships:       rtStreams.ships?.data,
+    satellites:  rtStreams.satellites?.data,
+    earthquakes: rtStreams.earthquakes?.data,
+    weather:     rtStreams.weather?.data,
+  }
+  const rtCounts = {
+    flights:     rtStreams.flights?.data?.count     ?? rtStreams.flights?.data?.items?.length     ?? 0,
+    ships:       rtStreams.ships?.data?.count       ?? rtStreams.ships?.data?.items?.length       ?? 0,
+    satellites:  rtStreams.satellites?.data?.count  ?? rtStreams.satellites?.data?.items?.length  ?? 0,
+    earthquakes: rtStreams.earthquakes?.data?.count ?? rtStreams.earthquakes?.data?.items?.length ?? 0,
+  }
+
+  // ── Start/stop the satellite TLE worker dynamically based on activeLayers.satellites ──
+  useEffect(() => {
+    let svc = null
+    let cancelled = false
+
+    if (!activeLayers.satellites) {
+      // Satellites layer is unplugged / off, do not run worker or fetch elements
+      return
+    }
+
+    const start = () => {
+      if (cancelled || svc) return
+      svc = startSatelliteWorker()
+      if (!svc) return
+      svc.onPositions((msg) => {
+        if (msg.type === 'positions') {
+          globeRef.current?.feedSatellites?.(msg.items)
+        }
+      })
+    }
+    // Wait briefly for backend stream, then start if backend has nothing
+    const t = setTimeout(start, 2000)
+    return () => { cancelled = true; clearTimeout(t); svc?.stop() }
+  }, [activeLayers.satellites])
 
   useEffect(() => {
     if (!messages.length) return
@@ -512,6 +585,29 @@ export default function App() {
   const handleQueryResult = useCallback(async (result) => {
     if (result.type === 'nl_query') {
       setQueryResult(result)
+      // Camera flyTo on NL query if geojson_overlay has features
+      const fc = result.geojson_overlay
+      if (fc?.features?.length && globeRef.current) {
+        const lons = [], lats = []
+        for (const f of fc.features) {
+          const g = f.geometry
+          if (!g) continue
+          const pts = g.type === 'Point' ? [g.coordinates]
+            : g.type === 'MultiPoint' || g.type === 'LineString' ? g.coordinates
+            : g.type === 'Polygon' ? g.coordinates.flat()
+            : g.type === 'MultiPolygon' ? g.coordinates.flat(2) : []
+          for (const c of pts) {
+            if (Array.isArray(c) && Number.isFinite(c[0]) && Number.isFinite(c[1])) {
+              lons.push(c[0]); lats.push(c[1])
+            }
+          }
+        }
+        if (lons.length) {
+          const lon = lons.reduce((a,b)=>a+b,0)/lons.length
+          const lat = lats.reduce((a,b)=>a+b,0)/lats.length
+          globeRef.current.flyTo(lon, lat, 1_500_000)
+        }
+      }
     } else if (result.type === 'ingest' && result.trace) {
       setCurrentTrace(result.trace)
       const ba = result.trace.before_after || []
@@ -535,13 +631,20 @@ export default function App() {
       <Toaster position="top-right" toastOptions={{
         style: {
           background: '#0d1117', color: 'rgba(255,255,255,.88)',
-          border: '1px solid rgba(255,179,0,.2)',
+          border: '1px solid rgba(59,130,246,.2)',
           fontFamily: "'IBM Plex Mono',monospace", fontSize: 11,
-          borderRadius: 0, borderLeft: '2px solid #ffb300',
+          borderRadius: 0, borderLeft: '2px solid #3b82f6',
         },
       }} />
       <div className="app-layout">
-        <Header wsConnected={isConnected} agentCount={7} />
+        <Header
+          wsConnected={isConnected}
+          rtConnected={rtConnected}
+          agentCount={7}
+          rtCounts={rtCounts}
+          satellite={satellite}
+          onSatelliteToggle={() => setSatellite(s => !s)}
+        />
 
         <LeftPanel
           activeLayers={activeLayers}
@@ -552,7 +655,13 @@ export default function App() {
         <main className="map-container">
           <NLQueryBar onResult={handleQueryResult} />
           <LayerControls activeLayers={activeLayers} onToggle={handleLayerToggle} />
-          <MapView activeLayers={activeLayers} onAssetClick={setSelectedAsset} />
+          <MapView
+            ref={globeRef}
+            activeLayers={activeLayers}
+            onAssetClick={setSelectedAsset}
+            realtime={realtimePayload}
+            satellite={satellite}
+          />
           <StatusLegend />
           {queryResult && <QueryResultBanner result={queryResult} onClose={() => setQueryResult(null)} />}
         </main>

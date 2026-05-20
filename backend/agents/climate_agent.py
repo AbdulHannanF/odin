@@ -57,7 +57,7 @@ class ClimateRiskAgent:
             "alert": {
                 "event_type": event_type,
                 "severity": "CRITICAL" if any(a["risk_level"] == RiskLevel.HIGH for a in affected_assets) else "MODERATE",
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.get_clock_info("process_time").start_time if hasattr(time, "get_clock_info") else time.gmtime()),
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             },
             "affected_assets": affected_assets,
             "economic_impact": {
@@ -68,8 +68,8 @@ class ClimateRiskAgent:
             "confidence": 0.85 if event_type != "UNKNOWN" else 0.40,
         }
         
-        logger.info("Climate analysis complete", 
-                    event=event_type, 
-                    affected_count=len(affected_assets), 
+        logger.info("Climate analysis complete",
+                    event_type=event_type,
+                    affected_count=len(affected_assets),
                     duration_ms=int((time.time()-t0)*1000))
         return result

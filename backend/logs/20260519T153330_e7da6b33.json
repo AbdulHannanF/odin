@@ -1,0 +1,357 @@
+{
+  "run_id": "e7da6b33-7a41-4baf-9e63-3612ff60691e",
+  "timestamp": "2026-05-19T15:33:13.628095",
+  "trigger": "unstructured_input",
+  "raw_input": "URGENT: Cat-4 hurricane making landfall Gulf Coast in 18 hrs. Sustained winds 220 km/h. Transmission corridors TX-44 and TX-12 in direct storm path.",
+  "incident_id": "INC-SMOKE001",
+  "workplan": {
+    "goal": "Analyze infrastructure risk from unstructured input and execute protective interventions",
+    "steps": [
+      "1. Load infrastructure assets from PostGIS",
+      "2. Fetch weather alert and assess climate risk (ClimateAgent)",
+      "3. Identify highest-risk asset and simulate cascading failure (CascadeAgent)",
+      "4. Score and rank intervention options (DecisionAgent)",
+      "5. Execute chosen action via mock APIs (DispatchAgent)",
+      "6. Validate results and adjust confidence (ReflectionAgent)",
+      "7. Record before/after state and save trace"
+    ],
+    "estimated_duration_s": 15.0,
+    "agents_involved": [
+      "ClimateAgent",
+      "CascadeAgent",
+      "DecisionAgent",
+      "DispatchAgent",
+      "ReflectionAgent"
+    ],
+    "generated_at": "2026-05-19T15:33:13.628311"
+  },
+  "observations": [
+    {
+      "key": "assets_loaded",
+      "value": 12,
+      "source": "PostGIS/seed",
+      "timestamp": "2026-05-19T15:33:18.630519"
+    },
+    {
+      "key": "region_detected",
+      "value": {
+        "min_lat": 25.0,
+        "min_lon": -98.0,
+        "max_lat": 31.0,
+        "max_lon": -87.0
+      },
+      "source": "text_analysis",
+      "timestamp": "2026-05-19T15:33:18.630704"
+    }
+  ],
+  "reasoning_steps": [
+    {
+      "agent": "ClimateAgent",
+      "step_index": 0,
+      "description": "Analyzed 12 assets. Found 8 at risk. Event: HURRICANE. Economic stake: $11,535,550",
+      "input_data": {
+        "asset_count": 12,
+        "raw_text_length": 148
+      },
+      "output_data": {
+        "affected_count": 8
+      },
+      "confidence": 0.85,
+      "duration_ms": 0,
+      "timestamp": "2026-05-19T15:33:18.631038"
+    },
+    {
+      "agent": "CascadeAgent",
+      "step_index": 1,
+      "description": "Failure of 'Atlantic Datacenter Delta' cascades to 0 downstream assets. Intervention window: 999 min.",
+      "input_data": null,
+      "output_data": null,
+      "confidence": 0.82,
+      "duration_ms": 4098,
+      "timestamp": "2026-05-19T15:33:22.730446"
+    },
+    {
+      "agent": "DecisionAgent",
+      "step_index": 2,
+      "description": "Chosen action: OPT-REROUTE \u2014 Emergency reroute power flow away from vulnerable transmission corridor. Confidence: 0.87.",
+      "input_data": null,
+      "output_data": null,
+      "confidence": 0.87,
+      "duration_ms": 0,
+      "timestamp": "2026-05-19T15:33:22.730957"
+    },
+    {
+      "agent": "DispatchAgent",
+      "step_index": 3,
+      "description": "Executed OPT-REROUTE: 0 tickets, 3 reroutes.",
+      "input_data": null,
+      "output_data": null,
+      "confidence": 0.87,
+      "duration_ms": 7776,
+      "timestamp": "2026-05-19T15:33:30.508128"
+    },
+    {
+      "agent": "ReflectionAgent",
+      "step_index": 4,
+      "description": "Trust level: MEDIUM. Issues: 2. Adjusted confidence: 0.77.",
+      "input_data": null,
+      "output_data": null,
+      "confidence": 0.77,
+      "duration_ms": 0,
+      "timestamp": "2026-05-19T15:33:30.509012"
+    }
+  ],
+  "decision_flow": {
+    "options": [
+      {
+        "option_id": "OPT-REROUTE",
+        "description": "Emergency reroute power flow away from vulnerable transmission corridor",
+        "score": 2.0707,
+        "economic_impact_usd": 9228440.0,
+        "human_impact_score": 0.75,
+        "resource_cost": 2.0,
+        "confidence": 0.87
+      },
+      {
+        "option_id": "OPT-LOAD-SHED",
+        "description": "Controlled load shedding to protect critical infrastructure nodes",
+        "score": 1.6243,
+        "economic_impact_usd": 3460665.0,
+        "human_impact_score": 0.4,
+        "resource_cost": 1.0,
+        "confidence": 0.78
+      },
+      {
+        "option_id": "OPT-HYBRID",
+        "description": "Combined reroute + crew dispatch for maximum resilience coverage",
+        "score": 0.908,
+        "economic_impact_usd": 10381995.0,
+        "human_impact_score": 0.9,
+        "resource_cost": 5.0,
+        "confidence": 0.91
+      },
+      {
+        "option_id": "OPT-DISPATCH",
+        "description": "Dispatch emergency maintenance crews to highest-risk assets",
+        "score": 0.762,
+        "economic_impact_usd": 5767775.0,
+        "human_impact_score": 0.6,
+        "resource_cost": 3.5,
+        "confidence": 0.82
+      }
+    ],
+    "chosen_option_id": "OPT-REROUTE",
+    "rationale": "'Emergency reroute power flow away from vulnerable transmission corridor' selected with score 2.071. Urgency window: 999 min. Economic stake: $11,535,550. Human impact weight: 0.75.",
+    "confidence": 0.87
+  },
+  "tool_calls": [
+    {
+      "tool_name": "GridRerouteAPI",
+      "method": "PATCH",
+      "endpoint": "/mock/grid/reroute",
+      "payload": {
+        "asset_id": "DC-001",
+        "to_status": "REROUTED"
+      },
+      "response": {
+        "simulated": true,
+        "asset_id": "DC-001",
+        "from_status": "VULNERABLE",
+        "to_status": "REROUTED",
+        "reason": "Automated reroute triggered by incident INC-SMOKE001",
+        "incident_id": "INC-SMOKE001",
+        "id": "SIM-098B97"
+      },
+      "status_code": 200,
+      "duration_ms": 2642,
+      "success": true,
+      "error": null,
+      "timestamp": "2026-05-19T15:33:30.507585"
+    },
+    {
+      "tool_name": "GridRerouteAPI",
+      "method": "PATCH",
+      "endpoint": "/mock/grid/reroute",
+      "payload": {
+        "asset_id": "WIND-002",
+        "to_status": "REROUTED"
+      },
+      "response": {
+        "simulated": true,
+        "asset_id": "WIND-002",
+        "from_status": "VULNERABLE",
+        "to_status": "REROUTED",
+        "reason": "Automated reroute triggered by incident INC-SMOKE001",
+        "incident_id": "INC-SMOKE001",
+        "id": "SIM-8425B4"
+      },
+      "status_code": 200,
+      "duration_ms": 2555,
+      "success": true,
+      "error": null,
+      "timestamp": "2026-05-19T15:33:30.507751"
+    },
+    {
+      "tool_name": "GridRerouteAPI",
+      "method": "PATCH",
+      "endpoint": "/mock/grid/reroute",
+      "payload": {
+        "asset_id": "PLANT-002",
+        "to_status": "REROUTED"
+      },
+      "response": {
+        "simulated": true,
+        "asset_id": "PLANT-002",
+        "from_status": "VULNERABLE",
+        "to_status": "REROUTED",
+        "reason": "Automated reroute triggered by incident INC-SMOKE001",
+        "incident_id": "INC-SMOKE001",
+        "id": "SIM-8E3335"
+      },
+      "status_code": 200,
+      "duration_ms": 2572,
+      "success": true,
+      "error": null,
+      "timestamp": "2026-05-19T15:33:30.507906"
+    }
+  ],
+  "error_recovery": {
+    "triggered": true,
+    "agent": "ClimateAgent",
+    "reason": "Weather API unavailable or FORCE_WEATHER_API_FAILURE=true",
+    "fallback_strategy": "Load synthetic weather data from seed generator",
+    "fallback_data_source": "synthetic_fallback",
+    "degraded_mode": true,
+    "retry_count": 1,
+    "timestamp": "2026-05-19T15:33:18.631217"
+  },
+  "before_states": [
+    {
+      "asset_id": "DC-001",
+      "status": "VULNERABLE",
+      "risk_level": "HIGH",
+      "risk_score": 0.72,
+      "timestamp": "2026-05-19T15:33:30.508300",
+      "metadata": {}
+    },
+    {
+      "asset_id": "WIND-002",
+      "status": "VULNERABLE",
+      "risk_level": "HIGH",
+      "risk_score": 0.72,
+      "timestamp": "2026-05-19T15:33:30.508461",
+      "metadata": {}
+    },
+    {
+      "asset_id": "PLANT-002",
+      "status": "VULNERABLE",
+      "risk_level": "HIGH",
+      "risk_score": 0.72,
+      "timestamp": "2026-05-19T15:33:30.508617",
+      "metadata": {}
+    }
+  ],
+  "after_states": [
+    {
+      "asset_id": "DC-001",
+      "status": "REROUTED",
+      "risk_level": "LOW",
+      "risk_score": 0.18,
+      "timestamp": "2026-05-19T15:33:30.508307",
+      "metadata": {}
+    },
+    {
+      "asset_id": "WIND-002",
+      "status": "REROUTED",
+      "risk_level": "LOW",
+      "risk_score": 0.18,
+      "timestamp": "2026-05-19T15:33:30.508466",
+      "metadata": {}
+    },
+    {
+      "asset_id": "PLANT-002",
+      "status": "REROUTED",
+      "risk_level": "LOW",
+      "risk_score": 0.18,
+      "timestamp": "2026-05-19T15:33:30.508622",
+      "metadata": {}
+    }
+  ],
+  "before_after": [
+    {
+      "asset_id": "DC-001",
+      "asset_name": "Atlantic Datacenter Delta",
+      "before": {
+        "asset_id": "DC-001",
+        "status": "VULNERABLE",
+        "risk_level": "HIGH",
+        "risk_score": 0.72,
+        "timestamp": "2026-05-19T15:33:30.508300",
+        "metadata": {}
+      },
+      "after": {
+        "asset_id": "DC-001",
+        "status": "REROUTED",
+        "risk_level": "LOW",
+        "risk_score": 0.18,
+        "timestamp": "2026-05-19T15:33:30.508307",
+        "metadata": {}
+      },
+      "change_reason": "Automated reroute triggered by incident INC-SMOKE001",
+      "triggered_by": "DispatchAgent",
+      "ticket_id": null
+    },
+    {
+      "asset_id": "WIND-002",
+      "asset_name": "Baltic Offshore Wind Farm Beta",
+      "before": {
+        "asset_id": "WIND-002",
+        "status": "VULNERABLE",
+        "risk_level": "HIGH",
+        "risk_score": 0.72,
+        "timestamp": "2026-05-19T15:33:30.508461",
+        "metadata": {}
+      },
+      "after": {
+        "asset_id": "WIND-002",
+        "status": "REROUTED",
+        "risk_level": "LOW",
+        "risk_score": 0.18,
+        "timestamp": "2026-05-19T15:33:30.508466",
+        "metadata": {}
+      },
+      "change_reason": "Automated reroute triggered by incident INC-SMOKE001",
+      "triggered_by": "DispatchAgent",
+      "ticket_id": null
+    },
+    {
+      "asset_id": "PLANT-002",
+      "asset_name": "Gulf Coast Gas Plant Epsilon",
+      "before": {
+        "asset_id": "PLANT-002",
+        "status": "VULNERABLE",
+        "risk_level": "HIGH",
+        "risk_score": 0.72,
+        "timestamp": "2026-05-19T15:33:30.508617",
+        "metadata": {}
+      },
+      "after": {
+        "asset_id": "PLANT-002",
+        "status": "REROUTED",
+        "risk_level": "LOW",
+        "risk_score": 0.18,
+        "timestamp": "2026-05-19T15:33:30.508622",
+        "metadata": {}
+      },
+      "change_reason": "Automated reroute triggered by incident INC-SMOKE001",
+      "triggered_by": "DispatchAgent",
+      "ticket_id": null
+    }
+  ],
+  "dispatch_tickets": [],
+  "reroute_commands": [],
+  "outcome_success": true,
+  "outcome_summary": "ODIN processed incident in 16881ms. Action: OPT-REROUTE. Assets affected: 8. Tickets: 0. Reroutes: 3. Final confidence: 0.77.",
+  "overall_confidence": 0.77,
+  "total_duration_ms": 16881
+}

@@ -11,6 +11,7 @@ from typing import Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from shared.config import settings
@@ -21,6 +22,7 @@ from shared.models import (
 )
 from agents.orchestrator import ODINOrchestrator
 from mock_apis.mock_router import router as mock_router
+from realtime import hub as realtime_hub, start_realtime_workers, stop_realtime_workers
 
 import structlog
 logger = structlog.get_logger("odin.gateway")
@@ -38,8 +40,9 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# ── CORS ──────────────────────────────────────────────────────────
+# ── Middleware ─────────────────────────────────────────────────────
 
+app.add_middleware(GZipMiddleware, minimum_size=1024)  # gzip responses > 1KB
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:8081", "*"],
@@ -84,9 +87,18 @@ async def startup():
         await startup_db()
     except Exception as e:
         logger.warning("DB startup failed — running in seed-data mode", error=str(e))
+    if settings.enable_realtime_workers:
+        try:
+            start_realtime_workers()
+        except Exception as e:
+            logger.warning("real-time workers failed to start", error=str(e))
 
 @app.on_event("shutdown")
 async def shutdown():
+    try:
+        await stop_realtime_workers()
+    except Exception:
+        pass
     try:
         from db.connections import shutdown_db
         await shutdown_db()
@@ -127,7 +139,7 @@ async def ingest(req: IngestRequest, background_tasks: BackgroundTasks):
     # Run pipeline synchronously (for demo) — use BackgroundTasks for production
     try:
         result = await orchestrator.run_incident_pipeline(req.text, incident_id)
-        # Broadcast to all WebSocket listeners
+        # Broadcast to legacy /ws/incidents listeners
         await ws_manager.broadcast({
             "type": "INCIDENT_PROCESSED",
             "run_id": result["run_id"],
@@ -136,6 +148,15 @@ async def ingest(req: IngestRequest, background_tasks: BackgroundTasks):
             "before_after": result["before_after"],
             "confidence": result["confidence"],
             "timestamp": datetime.utcnow().isoformat(),
+        })
+        # Mirror to the multi-channel hub
+        await realtime_hub.publish("agents", {
+            "type": "INCIDENT_PROCESSED",
+            "run_id": result["run_id"],
+            "incident_id": incident_id,
+            "chosen_action": result["decision"]["chosen_action"],
+            "confidence": result["confidence"],
+            "before_after_count": len(result["before_after"]),
         })
         return IngestResponse(
             run_id=result["run_id"],
@@ -260,6 +281,108 @@ async def websocket_incidents(websocket: WebSocket):
             await websocket.send_json({"type": "PONG", "timestamp": datetime.utcnow().isoformat()})
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
+
+# ── Real-time multi-channel WebSocket ─────────────────────────────
+
+@app.websocket("/ws/realtime")
+async def websocket_realtime(websocket: WebSocket):
+    """
+    Subscribe to one or more channels: flights, ships, satellites,
+    weather, earthquakes, agents.
+
+    Client → server messages:
+        {"action": "subscribe",   "channels": ["flights", "earthquakes"]}
+        {"action": "unsubscribe", "channels": ["flights"]}
+        {"action": "ping"}
+    Server → client:
+        {"channel": "<name>", "event": "snapshot|tick", "ts": "...", "data": {...}}
+    """
+    await websocket.accept()
+    try:
+        while True:
+            raw = await websocket.receive_text()
+            try:
+                import json as _json
+                msg = _json.loads(raw)
+            except Exception:
+                await websocket.send_json({"error": "invalid_json"})
+                continue
+            action = msg.get("action")
+            chans = msg.get("channels") or []
+            if action == "subscribe":
+                accepted = await realtime_hub.subscribe(websocket, chans)
+                await websocket.send_json({"event": "subscribed", "channels": accepted})
+            elif action == "unsubscribe":
+                await realtime_hub.unsubscribe_all(websocket)
+                await websocket.send_json({"event": "unsubscribed"})
+            elif action == "ping":
+                await websocket.send_json({"event": "pong", "ts": datetime.utcnow().isoformat()})
+            elif action == "stats":
+                await websocket.send_json({"event": "stats", **realtime_hub.stats()})
+            else:
+                await websocket.send_json({"error": "unknown_action", "received": action})
+    except WebSocketDisconnect:
+        await realtime_hub.unsubscribe_all(websocket)
+
+
+@app.get("/api/v1/realtime/snapshot/{channel}", tags=["Realtime"])
+async def realtime_snapshot(channel: str):
+    snap = realtime_hub.snapshot(channel)
+    if snap is None:
+        raise HTTPException(status_code=404, detail=f"no snapshot for channel '{channel}' yet")
+    return {"channel": channel, **snap}
+
+
+@app.get("/api/v1/realtime/stats", tags=["Realtime"])
+async def realtime_stats():
+    return realtime_hub.stats()
+
+
+# ── Layers API (static infrastructure GeoJSON) ───────────────────
+
+_LAYERS_DIR = Path(__file__).parent.parent / "db" / "seed_data"
+_DATA_CACHE_DIR = Path(__file__).parent.parent.parent / "data-cache"
+
+
+@app.get("/api/v1/layers/{name}", tags=["Layers"])
+async def get_layer(name: str):
+    """
+    Serve a static GeoJSON layer by name. Looks in data-cache/ first
+    (real ETL output) then falls back to backend/db/seed_data/.
+    """
+    from fastapi.responses import FileResponse
+    safe = name.replace("..", "").replace("/", "_").replace("\\", "_")
+    candidates = [
+        _DATA_CACHE_DIR / f"{safe}.geojson",
+        _DATA_CACHE_DIR / f"{safe}.json",
+        _LAYERS_DIR / f"{safe}.geojson",
+        _LAYERS_DIR / f"{safe}.json",
+    ]
+    for p in candidates:
+        if p.exists():
+            return FileResponse(
+                p,
+                media_type="application/json",
+                headers={
+                    "Cache-Control": "public, max-age=300",  # 5-min browser cache
+                    "Vary": "Accept-Encoding",
+                },
+            )
+    raise HTTPException(status_code=404, detail=f"layer '{name}' not found")
+
+
+@app.get("/api/v1/layers", tags=["Layers"])
+async def list_layers():
+    out: list[dict[str, Any]] = []
+    for base in (_DATA_CACHE_DIR, _LAYERS_DIR):
+        if not base.exists():
+            continue
+        for p in base.glob("*.geojson"):
+            out.append({"name": p.stem, "path": str(p), "size_bytes": p.stat().st_size})
+        for p in base.glob("*.json"):
+            out.append({"name": p.stem, "path": str(p), "size_bytes": p.stat().st_size})
+    return {"layers": out, "count": len(out)}
+
 
 # ── Mock APIs ─────────────────────────────────────────────────────
 

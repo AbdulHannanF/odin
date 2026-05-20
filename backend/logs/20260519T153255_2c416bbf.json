@@ -1,0 +1,69 @@
+{
+  "run_id": "2c416bbf-c2a3-479b-b93b-f0912ef9d9c2",
+  "timestamp": "2026-05-19T15:32:50.477835",
+  "trigger": "unstructured_input",
+  "raw_input": "URGENT: Cat-4 hurricane making landfall Gulf Coast in 18 hrs. Sustained winds 220 km/h. Transmission corridors TX-44 and TX-12 in direct storm path.",
+  "incident_id": "INC-SMOKE001",
+  "workplan": {
+    "goal": "Analyze infrastructure risk from unstructured input and execute protective interventions",
+    "steps": [
+      "1. Load infrastructure assets from PostGIS",
+      "2. Fetch weather alert and assess climate risk (ClimateAgent)",
+      "3. Identify highest-risk asset and simulate cascading failure (CascadeAgent)",
+      "4. Score and rank intervention options (DecisionAgent)",
+      "5. Execute chosen action via mock APIs (DispatchAgent)",
+      "6. Validate results and adjust confidence (ReflectionAgent)",
+      "7. Record before/after state and save trace"
+    ],
+    "estimated_duration_s": 15.0,
+    "agents_involved": [
+      "ClimateAgent",
+      "CascadeAgent",
+      "DecisionAgent",
+      "DispatchAgent",
+      "ReflectionAgent"
+    ],
+    "generated_at": "2026-05-19T15:32:50.478055"
+  },
+  "observations": [
+    {
+      "key": "assets_loaded",
+      "value": 12,
+      "source": "PostGIS/seed",
+      "timestamp": "2026-05-19T15:32:55.433343"
+    },
+    {
+      "key": "region_detected",
+      "value": {
+        "min_lat": 25.0,
+        "min_lon": -98.0,
+        "max_lat": 31.0,
+        "max_lon": -87.0
+      },
+      "source": "text_analysis",
+      "timestamp": "2026-05-19T15:32:55.433555"
+    }
+  ],
+  "reasoning_steps": [],
+  "decision_flow": null,
+  "tool_calls": [],
+  "error_recovery": {
+    "triggered": false,
+    "agent": null,
+    "reason": null,
+    "fallback_strategy": null,
+    "fallback_data_source": null,
+    "degraded_mode": false,
+    "retry_count": 0,
+    "timestamp": null
+  },
+  "before_states": [],
+  "after_states": [],
+  "before_after": [],
+  "dispatch_tickets": [],
+  "reroute_commands": [],
+  "outcome_success": false,
+  "outcome_summary": "Exception: _make_filtering_bound_logger.<locals>.make_method.<locals>.meth() got multiple values for argument 'event'",
+  "overall_confidence": 0.0,
+  "total_duration_ms": 4956
+}
