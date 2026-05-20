@@ -233,11 +233,7 @@ const CesiumGlobe = forwardRef(function CesiumGlobe(
       if (obj.billboards) obj.billboards.show = !!visible
       if (obj.entities) obj.entities.show = !!visible
       if (obj.dataSource) obj.dataSource.show = !!visible
-      if (obj.polylinesGlobal) obj.polylinesGlobal.show = !!visible
-      if (obj.polylinesLocal) {
-        const height = viewerRef.current?.camera.positionCartographic.height || 0
-        obj.polylinesLocal.show = !!visible && (height < 5_000_000.0)
-      }
+      if (obj.polylines) obj.polylines.show = !!visible
       obj.visible = !!visible
     }
     set(L.flights, activeLayers.flights !== false)
@@ -306,11 +302,7 @@ const CesiumGlobe = forwardRef(function CesiumGlobe(
       if (obj.lines) obj.lines.show = !!visible
       if (obj.billboards) obj.billboards.show = !!visible
       if (obj.dataSource) obj.dataSource.show = !!visible
-      if (obj.polylinesGlobal) obj.polylinesGlobal.show = !!visible
-      if (obj.polylinesLocal) {
-        const height = viewerRef.current?.camera.positionCartographic.height || 0
-        obj.polylinesLocal.show = !!visible && (height < 5_000_000.0)
-      }
+      if (obj.polylines) obj.polylines.show = !!visible
     },
     getViewer: () => viewerRef.current,
     getLayers: () => layersRef.current,
