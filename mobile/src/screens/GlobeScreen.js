@@ -22,6 +22,9 @@ import {
 import { WebView } from 'react-native-webview'
 import axios from 'axios'
 import { apiFetch } from '../services/mockApi'
+import { createLogger } from '../utils/logger'
+
+const log = createLogger('Globe')
 
 // Use bundled local frontend when no external URL is configured
 const FRONTEND_URL =
@@ -122,10 +125,16 @@ export default function GlobeScreen() {
     { id: 'intro', role: 'assistant', content: 'ODIN online. Ask about infrastructure risk, real-time aviation, satellites, supply chains, or cascading failures.' },
   ])
 
+  useEffect(() => {
+    log.info('mounted', { frontendUrl: FRONTEND_URL, apiUrl: API_URL })
+    return () => log.info('unmounted')
+  }, [])
+
   // Poll realtime snapshots every 6s (falls back to mock data when backend unavailable)
   useEffect(() => {
     let alive = true
     const tick = async () => {
+      log.debug('poll tick')
       try {
         const channels = ['flights', 'ships', 'satellites', 'earthquakes']
         const results = await Promise.all(channels.map(c =>
@@ -138,7 +147,9 @@ export default function GlobeScreen() {
         })
         setCounts(next)
         setRtConnected(true)
-      } catch {
+        log.debug('poll ok', next)
+      } catch (err) {
+        log.warn('poll error — stream offline', { error: err?.message })
         setRtConnected(false)
       }
     }
@@ -154,8 +165,10 @@ export default function GlobeScreen() {
     setChatOpen(true)
     setMessages(p => [...p, { id: 'u' + Date.now(), role: 'user', content: q }])
     setBusy(true)
+    log.info('query →', { query: q.slice(0, 120) })
     try {
       const { data } = await apiFetch(API, 'post', '/api/query/nl', { data: { query: q } })
+      log.info('query ←', { confidence: data.confidence, sources: data.data_sources })
       setMessages(p => [...p, {
         id: 'a' + Date.now(),
         role: 'assistant',
@@ -164,6 +177,7 @@ export default function GlobeScreen() {
         sources: data.data_sources,
       }])
     } catch (e) {
+      log.error('query error', { error: e?.message })
       setMessages(p => [...p, {
         id: 'e' + Date.now(),
         role: 'assistant',
@@ -224,9 +238,18 @@ export default function GlobeScreen() {
           allowFileAccessFromFileURLs
           allowUniversalAccessFromFileURLs
           userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 ODIN-Mobile"
-          onLoadEnd={() => setWebLoaded(true)}
-          onError={(e) => { if (!FRONTEND_URL.startsWith('file://')) setWebError(String(e.nativeEvent?.description || 'load error')) }}
-          onHttpError={(e) => setWebError(`HTTP ${e.nativeEvent?.statusCode}`)}
+          onLoadStart={() => log.debug('WebView loading', { url: FRONTEND_URL })}
+          onLoadEnd={() => { setWebLoaded(true); log.info('WebView loaded', { url: FRONTEND_URL }) }}
+          onError={(e) => {
+            const desc = String(e.nativeEvent?.description || 'load error')
+            log.error('WebView error', { desc })
+            if (!FRONTEND_URL.startsWith('file://')) setWebError(desc)
+          }}
+          onHttpError={(e) => {
+            const status = e.nativeEvent?.statusCode
+            log.error('WebView HTTP error', { status, url: FRONTEND_URL })
+            setWebError(`HTTP ${status}`)
+          }}
         />
       </View>
 

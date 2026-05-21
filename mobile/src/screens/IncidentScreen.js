@@ -5,6 +5,9 @@ import {
 } from 'react-native'
 import axios from 'axios'
 import { apiFetch } from '../services/mockApi'
+import { createLogger } from '../utils/logger'
+
+const log = createLogger('Incidents')
 
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL || 'http://62.84.187.126:4005'
@@ -82,22 +85,35 @@ export default function IncidentScreen() {
   const [running, setRunning]     = useState(false)
 
   const refresh = useCallback(async () => {
+    log.info('refresh start')
     setLoading(true)
     try {
       const { data } = await apiFetch(API, 'get', '/api/v1/realtime/snapshot/incidents').catch(() => ({ data: null }))
-      if (data?.data?.items?.length) setIncidents(data.data.items)
+      if (data?.data?.items?.length) {
+        log.info('refreshed', { count: data.data.items.length })
+        setIncidents(data.data.items)
+      } else {
+        log.warn('refresh: no incidents returned')
+      }
     } finally { setLoading(false) }
   }, [])
 
-  useEffect(() => { refresh() }, [])
+  useEffect(() => {
+    log.info('mounted')
+    refresh()
+    return () => log.info('unmounted')
+  }, [])
 
   const runPipeline = async () => {
     if (!input.trim() || running) return
+    log.info('pipeline run', { inputLen: input.trim().length, preview: input.slice(0, 60) })
     setRunning(true)
     try {
       const { data } = await apiFetch(API, 'post', '/api/ingest', { data: { text: input } })
+      const incidentId = `INC-${(data.incident_id || Date.now().toString(36)).toUpperCase()}`
+      log.info('pipeline ok', { id: incidentId, confidence: data.confidence })
       setIncidents(prev => [{
-        id: `INC-${(data.incident_id || Date.now().toString(36)).toUpperCase()}`,
+        id: incidentId,
         title: input.slice(0, 60),
         severity: 'HIGH',
         summary: data.summary || 'Pipeline processed.',
@@ -107,6 +123,7 @@ export default function IncidentScreen() {
       }, ...prev])
       setInput('')
     } catch (err) {
+      log.error('pipeline error', { error: err?.message || 'unreachable' })
       setIncidents(prev => [{
         id: 'ERR-' + Date.now(),
         title: 'Pipeline error',

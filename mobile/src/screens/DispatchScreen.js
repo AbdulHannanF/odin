@@ -5,6 +5,9 @@ import {
 } from 'react-native'
 import axios from 'axios'
 import { apiFetch } from '../services/mockApi'
+import { createLogger } from '../utils/logger'
+
+const log = createLogger('Dispatch')
 
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL || 'http://62.84.187.126:4005'
@@ -90,19 +93,33 @@ export default function DispatchScreen() {
   const [filter, setFilter]   = useState('ALL')
 
   const refresh = useCallback(async () => {
+    log.info('refresh start')
     setLoading(true)
     try {
       const { data } = await apiFetch(API, 'get', '/api/v1/realtime/snapshot/agents').catch(() => ({ data: null }))
       if (data?.data?.items?.length) {
+        log.info('refreshed', { count: data.data.items.length })
         setTickets(data.data.items.map(t => ({ ...t, status: t.status || 'PENDING' })))
+      } else {
+        log.warn('refresh: no tickets returned')
       }
     } finally { setLoading(false) }
   }, [])
 
-  useEffect(() => { refresh() }, [])
+  useEffect(() => {
+    log.info('mounted')
+    refresh()
+    return () => log.info('unmounted')
+  }, [])
 
-  const approve = useCallback((id) => setTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'ACTIVE' } : t)), [])
-  const dismiss = useCallback((id) => setTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'CANCELLED' } : t)), [])
+  const approve = useCallback((id) => {
+    log.info('ticket approve', { id })
+    setTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'ACTIVE' } : t))
+  }, [])
+  const dismiss = useCallback((id) => {
+    log.info('ticket dismiss', { id })
+    setTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'CANCELLED' } : t))
+  }, [])
 
   const FILTERS = ['ALL', 'PENDING', 'ACTIVE', 'RESOLVED']
   const displayed = filter === 'ALL' ? tickets
@@ -116,7 +133,7 @@ export default function DispatchScreen() {
           <TouchableOpacity
             key={f}
             style={[S.filterPill, filter === f && { backgroundColor: T.primary, borderColor: T.primary }]}
-            onPress={() => setFilter(f)}
+            onPress={() => { log.info('filter change', { filter: f }); setFilter(f) }}
           >
             <Text style={[S.filterText, filter === f && { color: '#fff' }]}>{f}</Text>
           </TouchableOpacity>

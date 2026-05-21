@@ -5,6 +5,9 @@ import {
 } from 'react-native'
 import axios from 'axios'
 import { apiFetch } from '../services/mockApi'
+import { createLogger } from '../utils/logger'
+
+const log = createLogger('Assets')
 
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL || 'http://62.84.187.126:4005'
@@ -51,13 +54,24 @@ export default function HomeScreen() {
   const current = ASSET_TYPES.find(t => t.key === activeType)
 
   const load = useCallback(async (type) => {
+    const endpoint = ASSET_TYPES.find(t => t.key === type).endpoint
+    log.info('load start', { type, endpoint })
     setLoading(true); setFeatures([]); setPage(0)
     try {
-      const endpoint = ASSET_TYPES.find(t => t.key === type).endpoint
       const { data } = await apiFetch(API, 'get', endpoint)
+      const count = data.features?.length ?? 0
+      log.info('load ok', { type, count })
       setFeatures(data.features || [])
-    } catch { setFeatures([]) }
+    } catch (err) {
+      log.error('load failed', { type, error: err?.message })
+      setFeatures([])
+    }
     finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => {
+    log.info('mounted')
+    return () => log.info('unmounted')
   }, [])
 
   useEffect(() => { load(activeType) }, [activeType])
@@ -80,7 +94,7 @@ export default function HomeScreen() {
           <TouchableOpacity
             key={t.key}
             style={[S.tab, activeType === t.key && { borderBottomColor: t.color }]}
-            onPress={() => setActiveType(t.key)}
+            onPress={() => { log.info('tab switch', { to: t.key }); setActiveType(t.key) }}
           >
             <Text style={[S.tabIcon, { color: activeType === t.key ? t.color : T.muted }]}>{t.icon}</Text>
             <Text style={[S.tabLabel, { color: activeType === t.key ? t.color : T.muted }]}>{t.label}</Text>
@@ -112,7 +126,12 @@ export default function HomeScreen() {
           refreshControl={
             <RefreshControl refreshing={loading} onRefresh={() => load(activeType)} tintColor={current.color} />
           }
-          onEndReached={() => { if (pageData.length < filtered.length) setPage(p => p + 1) }}
+          onEndReached={() => {
+            if (pageData.length < filtered.length) {
+              log.debug('load more', { page: page + 1, shown: pageData.length, total: filtered.length })
+              setPage(p => p + 1)
+            }
+          }}
           onEndReachedThreshold={0.3}
           ListFooterComponent={
             pageData.length < filtered.length
