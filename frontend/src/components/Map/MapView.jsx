@@ -5,7 +5,7 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
 // ── Constants ──────────────────────────────────────────────────────────────
-const API  = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:4005`
+const API  = import.meta.env.VITE_API_URL || ''
 const L    = (n) => `${API}/api/v1/layers/${n}`
 const EMPTY_FC = { type: 'FeatureCollection', features: [] }
 const CARTO_DARK_NOLABELS = 'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json'
