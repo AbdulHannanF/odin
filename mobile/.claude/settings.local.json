@@ -13,7 +13,15 @@
       "PowerShell(winget search *)",
       "PowerShell(winget install *)",
       "PowerShell(Get-Process *)",
-      "PowerShell($env:ANDROID_HOME = \"C:\\\\Users\\\\ajsar\\\\AppData\\\\Local\\\\Android\\\\Sdk\"; $env:JAVA_HOME = \"C:\\\\Users\\\\ajsar\\\\jdk17\"; Set-Location \"C:\\\\Users\\\\ajsar\\\\odin\\\\mobile\\\\android\"; .\\\\gradlew.bat assembleRelease 2>&1)"
+      "PowerShell($env:ANDROID_HOME = \"C:\\\\Users\\\\ajsar\\\\AppData\\\\Local\\\\Android\\\\Sdk\"; $env:JAVA_HOME = \"C:\\\\Users\\\\ajsar\\\\jdk17\"; Set-Location \"C:\\\\Users\\\\ajsar\\\\odin\\\\mobile\\\\android\"; .\\\\gradlew.bat assembleRelease 2>&1)",
+      "Bash(npx expo *)",
+      "Bash(gradlew.bat assembleDebug)",
+      "Bash(Get-Content \"C:\\\\Users\\\\ajsar\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-ajsar-odin-mobile\\\\35c4a283-06d0-4284-83a4-623d6b311b4e\\\\tasks\\\\brihwd1pj.output\" -Wait)",
+      "Bash(Select-String -Pattern \"BUILD SUCCESSFUL|BUILD FAILED|FAILURE|error:|Exception|assembleDebug\" --SimpleMatch)",
+      "Bash(node -e \"const e=require\\('./node_modules/expo/package.json'\\); console.log\\('Expo SDK:', e.version\\)\")",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "Bash(python *)",
+      "Bash(curl -s --max-time 3 http://localhost:4004/ -o /dev/null -w \"%{http_code}\")"
     ]
   }
 }

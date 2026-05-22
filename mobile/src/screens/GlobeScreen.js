@@ -21,14 +21,13 @@ import {
 } from 'react-native'
 import { WebView } from 'react-native-webview'
 import axios from 'axios'
-import { apiFetch, mockFetch } from '../services/mockApi'
+import { apiFetch } from '../services/mockApi'
+import { createLogger } from '../utils/logger'
 
-// Use bundled local frontend when no external URL is configured
+const log = createLogger('Globe')
+
 const FRONTEND_URL =
-  process.env.EXPO_PUBLIC_FRONTEND_URL ||
-  (Platform.OS === 'android'
-    ? 'file:///android_asset/www/index.html'
-    : 'http://localhost:3000')
+  process.env.EXPO_PUBLIC_FRONTEND_URL || 'http://62.84.187.126:4004'
 
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL || 'http://62.84.187.126:4005'
@@ -104,11 +103,15 @@ function MessageBubble({ m }) {
   )
 }
 
+const RETRY_INTERVAL = 5000
+
 export default function GlobeScreen() {
   const webRef = useRef(null)
   const scrollRef = useRef(null)
+  const retryTimer = useRef(null)
   const [webLoaded, setWebLoaded] = useState(false)
   const [webError, setWebError] = useState(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   // Live counters polled via REST (cheap, avoids WS in RN)
   const [counts, setCounts] = useState({ flights: 0, ships: 0, satellites: 0, earthquakes: 0 })
@@ -122,10 +125,30 @@ export default function GlobeScreen() {
     { id: 'intro', role: 'assistant', content: 'ODIN online. Ask about infrastructure risk, real-time aviation, satellites, supply chains, or cascading failures.' },
   ])
 
+  useEffect(() => {
+    log.info('mounted', { frontendUrl: FRONTEND_URL, apiUrl: API_URL })
+    return () => {
+      log.info('unmounted')
+      if (retryTimer.current) clearTimeout(retryTimer.current)
+    }
+  }, [])
+
+  const scheduleRetry = useCallback(() => {
+    if (retryTimer.current) clearTimeout(retryTimer.current)
+    retryTimer.current = setTimeout(() => {
+      log.info('WebView auto-retry', { url: FRONTEND_URL })
+      setWebError(null)
+      setWebLoaded(false)
+      setRetryCount(c => c + 1)
+      webRef.current?.reload()
+    }, RETRY_INTERVAL)
+  }, [])
+
   // Poll realtime snapshots every 6s (falls back to mock data when backend unavailable)
   useEffect(() => {
     let alive = true
     const tick = async () => {
+      log.debug('poll tick')
       try {
         const channels = ['flights', 'ships', 'satellites', 'earthquakes']
         const results = await Promise.all(channels.map(c =>
@@ -138,7 +161,9 @@ export default function GlobeScreen() {
         })
         setCounts(next)
         setRtConnected(true)
-      } catch {
+        log.debug('poll ok', next)
+      } catch (err) {
+        log.warn('poll error — stream offline', { error: err?.message })
         setRtConnected(false)
       }
     }
@@ -154,8 +179,10 @@ export default function GlobeScreen() {
     setChatOpen(true)
     setMessages(p => [...p, { id: 'u' + Date.now(), role: 'user', content: q }])
     setBusy(true)
+    log.info('query →', { query: q.slice(0, 120) })
     try {
       const { data } = await apiFetch(API, 'post', '/api/query/nl', { data: { query: q } })
+      log.info('query ←', { confidence: data.confidence, sources: data.data_sources })
       setMessages(p => [...p, {
         id: 'a' + Date.now(),
         role: 'assistant',
@@ -164,6 +191,7 @@ export default function GlobeScreen() {
         sources: data.data_sources,
       }])
     } catch (e) {
+      log.error('query error', { error: e?.message })
       setMessages(p => [...p, {
         id: 'e' + Date.now(),
         role: 'assistant',
@@ -196,15 +224,21 @@ export default function GlobeScreen() {
           <View style={S.errorBox}>
             <Text style={S.errorTitle}>GLOBE OFFLINE</Text>
             <Text style={S.errorBody}>
-              Web frontend unreachable.{'\n\n'}
-              Start it with{'\n'}
-              <Text style={{ color: T.amber }}>cd frontend && npm run dev</Text>{'\n\n'}
-              Then set in mobile env:{'\n'}
-              <Text style={{ color: T.cyan }}>EXPO_PUBLIC_FRONTEND_URL=http://&lt;LAN-IP&gt;:3000</Text>{'\n'}
-              <Text style={{ color: T.cyan }}>EXPO_PUBLIC_API_URL=http://&lt;LAN-IP&gt;:8000</Text>
+              Cannot reach frontend at{'\n'}
+              <Text style={{ color: T.cyan }}>{FRONTEND_URL}</Text>{'\n\n'}
+              {webError}
             </Text>
-            <TouchableOpacity style={S.retryBtn} onPress={() => { setWebError(null); webRef.current?.reload() }}>
-              <Text style={S.retryText}>RETRY</Text>
+            <Text style={[S.errorBody, { color: T.muted, marginTop: 8 }]}>
+              Retrying every {RETRY_INTERVAL / 1000}s… (attempt {retryCount + 1})
+            </Text>
+            <TouchableOpacity style={S.retryBtn} onPress={() => {
+              if (retryTimer.current) clearTimeout(retryTimer.current)
+              setWebError(null)
+              setWebLoaded(false)
+              setRetryCount(c => c + 1)
+              webRef.current?.reload()
+            }}>
+              <Text style={S.retryText}>RETRY NOW</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -224,9 +258,19 @@ export default function GlobeScreen() {
           allowFileAccessFromFileURLs
           allowUniversalAccessFromFileURLs
           userAgent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 ODIN-Mobile"
-          onLoadEnd={() => setWebLoaded(true)}
-          onError={(e) => { if (!FRONTEND_URL.startsWith('file://')) setWebError(String(e.nativeEvent?.description || 'load error')) }}
-          onHttpError={(e) => setWebError(`HTTP ${e.nativeEvent?.statusCode}`)}
+          onLoadStart={() => log.debug('WebView loading', { url: FRONTEND_URL })}
+          onLoadEnd={() => { setWebLoaded(true); log.info('WebView loaded', { url: FRONTEND_URL }) }}
+          onError={(e) => {
+            const desc = String(e.nativeEvent?.description || 'load error')
+            log.error('WebView error', { desc })
+            if (!FRONTEND_URL.startsWith('file://')) { setWebError(desc); scheduleRetry() }
+          }}
+          onHttpError={(e) => {
+            const status = e.nativeEvent?.statusCode
+            log.error('WebView HTTP error', { status, url: FRONTEND_URL })
+            setWebError(`HTTP ${status}`)
+            scheduleRetry()
+          }}
         />
       </View>
 

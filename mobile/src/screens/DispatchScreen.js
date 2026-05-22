@@ -5,6 +5,9 @@ import {
 } from 'react-native'
 import axios from 'axios'
 import { apiFetch } from '../services/mockApi'
+import { createLogger } from '../utils/logger'
+
+const log = createLogger('Dispatch')
 
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL || 'http://62.84.187.126:4005'
@@ -28,12 +31,6 @@ const STATUS_COLORS = {
   PENDING: '#ffd740', ACTIVE: '#00e676', SENT: '#3b82f6', RESOLVED: 'rgba(255,255,255,0.4)', CANCELLED: '#ff5252',
 }
 
-const DEMO_TICKETS = [
-  { id: 'TKT-0001', action: 'REROUTE',   asset: 'TX-44 Corridor',           reason: 'Hurricane path — pre-emptive load transfer to TX-55 backup corridor.', confidence: 0.92, status: 'PENDING', created: new Date(Date.now() - 1800000) },
-  { id: 'TKT-0002', action: 'MONITOR',   asset: 'Grid Hub Alpha',            reason: 'Voltage fluctuation ±15% — enhanced monitoring every 30s.',             confidence: 0.84, status: 'ACTIVE',  created: new Date(Date.now() - 3600000) },
-  { id: 'TKT-0003', action: 'NOTIFY',    asset: 'Northeast Datacenters',     reason: 'Hurricane advisory issued. On-call engineers alerted.',                  confidence: 0.78, status: 'SENT',    created: new Date(Date.now() - 7200000) },
-  { id: 'TKT-0004', action: 'LOAD_SHED', asset: 'Gulf Coast Substations',    reason: 'Storm landfall T-18h. Non-critical load shed to protect critical infra.', confidence: 0.71, status: 'PENDING', created: new Date(Date.now() - 9000000) },
-]
 
 function StatsBar({ tickets }) {
   const pending  = tickets.filter(t => t.status === 'PENDING').length
@@ -91,24 +88,38 @@ function TicketCard({ item, onApprove, onDismiss }) {
 }
 
 export default function DispatchScreen() {
-  const [tickets, setTickets] = useState(DEMO_TICKETS)
+  const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(false)
   const [filter, setFilter]   = useState('ALL')
 
   const refresh = useCallback(async () => {
+    log.info('refresh start')
     setLoading(true)
     try {
       const { data } = await apiFetch(API, 'get', '/api/v1/realtime/snapshot/agents').catch(() => ({ data: null }))
       if (data?.data?.items?.length) {
-        setTickets([...data.data.items.map(t => ({ ...t, status: t.status || 'PENDING' })), ...DEMO_TICKETS])
+        log.info('refreshed', { count: data.data.items.length })
+        setTickets(data.data.items.map(t => ({ ...t, status: t.status || 'PENDING' })))
+      } else {
+        log.warn('refresh: no tickets returned')
       }
     } finally { setLoading(false) }
   }, [])
 
-  useEffect(() => { refresh() }, [])
+  useEffect(() => {
+    log.info('mounted')
+    refresh()
+    return () => log.info('unmounted')
+  }, [])
 
-  const approve = useCallback((id) => setTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'ACTIVE' } : t)), [])
-  const dismiss = useCallback((id) => setTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'CANCELLED' } : t)), [])
+  const approve = useCallback((id) => {
+    log.info('ticket approve', { id })
+    setTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'ACTIVE' } : t))
+  }, [])
+  const dismiss = useCallback((id) => {
+    log.info('ticket dismiss', { id })
+    setTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'CANCELLED' } : t))
+  }, [])
 
   const FILTERS = ['ALL', 'PENDING', 'ACTIVE', 'RESOLVED']
   const displayed = filter === 'ALL' ? tickets
@@ -122,7 +133,7 @@ export default function DispatchScreen() {
           <TouchableOpacity
             key={f}
             style={[S.filterPill, filter === f && { backgroundColor: T.primary, borderColor: T.primary }]}
-            onPress={() => setFilter(f)}
+            onPress={() => { log.info('filter change', { filter: f }); setFilter(f) }}
           >
             <Text style={[S.filterText, filter === f && { color: '#fff' }]}>{f}</Text>
           </TouchableOpacity>

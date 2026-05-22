@@ -5,6 +5,9 @@ import {
 } from 'react-native'
 import axios from 'axios'
 import { apiFetch } from '../services/mockApi'
+import { createLogger } from '../utils/logger'
+
+const log = createLogger('Incidents')
 
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL || 'http://62.84.187.126:4005'
@@ -23,17 +26,6 @@ const SEV_COLOR = {
   CRITICAL: '#ff5252', HIGH: '#ff6d00', MEDIUM: '#ffd740', LOW: '#00e676',
 }
 
-const DEMO_ALERTS = [
-  { id: 'DEMO-001', title: 'Cat-4 Hurricane — Gulf Coast', severity: 'CRITICAL',
-    summary: 'TX-44 and TX-12 in direct storm path. Datacenter cascade risk high.',
-    type: 'WEATHER', time: new Date(Date.now() - 3600000) },
-  { id: 'DEMO-002', title: 'DRC Cobalt Export Moratorium', severity: 'HIGH',
-    summary: 'Affects 65% global cobalt supply. EV and datacenter battery backups at risk.',
-    type: 'SUPPLY', time: new Date(Date.now() - 7200000) },
-  { id: 'DEMO-003', title: 'Grid Hub Alpha — Voltage Fluctuation', severity: 'HIGH',
-    summary: '±15% beyond nominal. Three hospitals and one major datacenter on same feeder.',
-    type: 'SENSOR', time: new Date(Date.now() - 14400000) },
-]
 
 function IncidentCard({ item, onPress }) {
   const color = SEV_COLOR[item.severity] || T.muted
@@ -86,29 +78,42 @@ function DetailModal({ item, onClose }) {
 }
 
 export default function IncidentScreen() {
-  const [incidents, setIncidents] = useState(DEMO_ALERTS)
+  const [incidents, setIncidents] = useState([])
   const [selected, setSelected]   = useState(null)
   const [loading, setLoading]     = useState(false)
   const [input, setInput]         = useState('')
   const [running, setRunning]     = useState(false)
 
   const refresh = useCallback(async () => {
+    log.info('refresh start')
     setLoading(true)
     try {
       const { data } = await apiFetch(API, 'get', '/api/v1/realtime/snapshot/incidents').catch(() => ({ data: null }))
-      if (data?.data?.items?.length) setIncidents(prev => [...data.data.items, ...DEMO_ALERTS])
+      if (data?.data?.items?.length) {
+        log.info('refreshed', { count: data.data.items.length })
+        setIncidents(data.data.items)
+      } else {
+        log.warn('refresh: no incidents returned')
+      }
     } finally { setLoading(false) }
   }, [])
 
-  useEffect(() => { refresh() }, [])
+  useEffect(() => {
+    log.info('mounted')
+    refresh()
+    return () => log.info('unmounted')
+  }, [])
 
   const runPipeline = async () => {
     if (!input.trim() || running) return
+    log.info('pipeline run', { inputLen: input.trim().length, preview: input.slice(0, 60) })
     setRunning(true)
     try {
       const { data } = await apiFetch(API, 'post', '/api/ingest', { data: { text: input } })
+      const incidentId = `INC-${(data.incident_id || Date.now().toString(36)).toUpperCase()}`
+      log.info('pipeline ok', { id: incidentId, confidence: data.confidence })
       setIncidents(prev => [{
-        id: `INC-${(data.incident_id || Date.now().toString(36)).toUpperCase()}`,
+        id: incidentId,
         title: input.slice(0, 60),
         severity: 'HIGH',
         summary: data.summary || 'Pipeline processed.',
@@ -117,12 +122,13 @@ export default function IncidentScreen() {
         confidence: data.confidence,
       }, ...prev])
       setInput('')
-    } catch {
+    } catch (err) {
+      log.error('pipeline error', { error: err?.message || 'unreachable' })
       setIncidents(prev => [{
         id: 'ERR-' + Date.now(),
         title: 'Pipeline error',
         severity: 'MEDIUM',
-        summary: 'Backend unreachable — running in demo mode.',
+        summary: `Backend error: ${err?.message || 'unreachable'}`,
         type: 'ERROR',
         time: new Date(),
       }, ...prev])

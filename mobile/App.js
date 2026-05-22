@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { StatusBar } from 'expo-status-bar'
 import { Text } from 'react-native'
+import { createLogger, sessionId } from './src/utils/logger'
 
 import GlobeScreen from './src/screens/GlobeScreen'
 import HomeScreen from './src/screens/HomeScreen'
@@ -10,6 +11,7 @@ import IncidentScreen from './src/screens/IncidentScreen'
 import DispatchScreen from './src/screens/DispatchScreen'
 
 const Tab = createBottomTabNavigator()
+const log = createLogger('App')
 
 const THEME = {
   bg: '#080a0e',
@@ -25,18 +27,29 @@ const THEME = {
 const ICONS = { Globe: '◉', Assets: '⊕', Incidents: '⚠', Dispatch: '⚑' }
 
 export default function App() {
+  useEffect(() => {
+    log.info(`session ${sessionId} boot`)
+    return () => log.info('app unmounted')
+  }, [])
+
   return (
-    <NavigationContainer theme={{
-      dark: true,
-      colors: {
-        primary: THEME.primary,
-        background: THEME.bg,
-        card: THEME.surface,
-        text: THEME.text,
-        border: THEME.border,
-        notification: THEME.primary,
-      }
-    }}>
+    <NavigationContainer
+      onStateChange={(state) => {
+        if (!state) return
+        const route = state.routes[state.index]
+        log.info(`nav → ${route?.name}`, { index: state.index })
+      }}
+      theme={{
+        dark: true,
+        colors: {
+          primary: THEME.primary,
+          background: THEME.bg,
+          card: THEME.surface,
+          text: THEME.text,
+          border: THEME.border,
+          notification: THEME.primary,
+        }
+      }}>
       <StatusBar style="light" backgroundColor={THEME.bg} />
       <Tab.Navigator
         initialRouteName="Globe"
