@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Test-Path \"C:\\\\Users\\\\ajsar\\\\odin\\\\mobile\\\\node_modules\"; \\(Get-ChildItem \"C:\\\\Users\\\\ajsar\\\\odin\\\\mobile\\\\node_modules\" | Measure-Object\\).Count)",
+      "PowerShell(Head *)",
+      "PowerShell(\\(Get-Content \"C:\\\\Users\\\\ajsar\\\\odin\\\\mobile\\\\node_modules\\\\@react-native-community\\\\cli-platform-android\\\\package.json\" | ConvertFrom-Json\\).version)",
+      "PowerShell(Test-Path \"C:\\\\Users\\\\ajsar\\\\odin\\\\mobile\\\\node_modules\\\\@react-native\\\\gradle-plugin\"; \\(Get-Content \"C:\\\\Users\\\\ajsar\\\\odin\\\\mobile\\\\node_modules\\\\@react-native\\\\gradle-plugin\\\\package.json\" -ErrorAction SilentlyContinue | ConvertFrom-Json\\).version)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(Split-Path *)",
+      "PowerShell(node --print \"require.resolve\\('@react-native/gradle-plugin/package.json'\\)\" 2>&1)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(node --print \"require.resolve\\('@expo/cli'\\)\" 2>&1)"
+    ]
+  }
+}
