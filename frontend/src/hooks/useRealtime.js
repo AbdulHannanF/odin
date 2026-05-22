@@ -6,7 +6,7 @@
  */
 import { useEffect, useRef, useState, useCallback } from 'react'
 
-const WS_URL = import.meta.env.VITE_WS_URL || `ws://${window.location.hostname}:8000`
+const WS_URL = import.meta.env.VITE_WS_URL || `ws://${window.location.hostname}:4005`
 
 export function useRealtime(channels = ['flights', 'satellites', 'earthquakes', 'ships', 'weather']) {
   const [connected, setConnected] = useState(false)

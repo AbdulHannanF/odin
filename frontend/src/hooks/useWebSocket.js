@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://127.0.0.1:8000'
+const WS_URL = import.meta.env.VITE_WS_URL || `ws://${window.location.hostname}:4005`
 
 export function useWebSocket(path = '/ws/incidents') {
   const [isConnected, setIsConnected] = useState(false)

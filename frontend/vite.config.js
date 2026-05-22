@@ -8,9 +8,9 @@ export default defineConfig({
     port: 3000,
     host: '0.0.0.0',
     proxy: {
-      '/api':  { target: 'http://localhost:8000', changeOrigin: true },
-      '/mock': { target: 'http://localhost:8000', changeOrigin: true },
-      '/ws':   { target: 'ws://localhost:8000', ws: true },
+      '/api':  { target: 'http://localhost:4005', changeOrigin: true },
+      '/mock': { target: 'http://localhost:4005', changeOrigin: true },
+      '/ws':   { target: 'ws://localhost:4005', ws: true },
     },
   },
   build: {

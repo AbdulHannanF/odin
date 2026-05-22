@@ -26,12 +26,8 @@ import { createLogger } from '../utils/logger'
 
 const log = createLogger('Globe')
 
-// Use bundled local frontend when no external URL is configured
 const FRONTEND_URL =
-  process.env.EXPO_PUBLIC_FRONTEND_URL ||
-  (Platform.OS === 'android'
-    ? 'file:///android_asset/www/index.html'
-    : 'http://localhost:3000')
+  process.env.EXPO_PUBLIC_FRONTEND_URL || 'http://62.84.187.126:4004'
 
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL || 'http://62.84.187.126:4005'
@@ -107,11 +103,15 @@ function MessageBubble({ m }) {
   )
 }
 
+const RETRY_INTERVAL = 5000
+
 export default function GlobeScreen() {
   const webRef = useRef(null)
   const scrollRef = useRef(null)
+  const retryTimer = useRef(null)
   const [webLoaded, setWebLoaded] = useState(false)
   const [webError, setWebError] = useState(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   // Live counters polled via REST (cheap, avoids WS in RN)
   const [counts, setCounts] = useState({ flights: 0, ships: 0, satellites: 0, earthquakes: 0 })
@@ -127,7 +127,21 @@ export default function GlobeScreen() {
 
   useEffect(() => {
     log.info('mounted', { frontendUrl: FRONTEND_URL, apiUrl: API_URL })
-    return () => log.info('unmounted')
+    return () => {
+      log.info('unmounted')
+      if (retryTimer.current) clearTimeout(retryTimer.current)
+    }
+  }, [])
+
+  const scheduleRetry = useCallback(() => {
+    if (retryTimer.current) clearTimeout(retryTimer.current)
+    retryTimer.current = setTimeout(() => {
+      log.info('WebView auto-retry', { url: FRONTEND_URL })
+      setWebError(null)
+      setWebLoaded(false)
+      setRetryCount(c => c + 1)
+      webRef.current?.reload()
+    }, RETRY_INTERVAL)
   }, [])
 
   // Poll realtime snapshots every 6s (falls back to mock data when backend unavailable)
@@ -210,15 +224,21 @@ export default function GlobeScreen() {
           <View style={S.errorBox}>
             <Text style={S.errorTitle}>GLOBE OFFLINE</Text>
             <Text style={S.errorBody}>
-              Web frontend unreachable.{'\n\n'}
-              Start it with{'\n'}
-              <Text style={{ color: T.amber }}>cd frontend && npm run dev</Text>{'\n\n'}
-              Then set in mobile env:{'\n'}
-              <Text style={{ color: T.cyan }}>EXPO_PUBLIC_FRONTEND_URL=http://&lt;LAN-IP&gt;:3000</Text>{'\n'}
-              <Text style={{ color: T.cyan }}>EXPO_PUBLIC_API_URL=http://&lt;LAN-IP&gt;:8000</Text>
+              Cannot reach frontend at{'\n'}
+              <Text style={{ color: T.cyan }}>{FRONTEND_URL}</Text>{'\n\n'}
+              {webError}
             </Text>
-            <TouchableOpacity style={S.retryBtn} onPress={() => { setWebError(null); webRef.current?.reload() }}>
-              <Text style={S.retryText}>RETRY</Text>
+            <Text style={[S.errorBody, { color: T.muted, marginTop: 8 }]}>
+              Retrying every {RETRY_INTERVAL / 1000}s… (attempt {retryCount + 1})
+            </Text>
+            <TouchableOpacity style={S.retryBtn} onPress={() => {
+              if (retryTimer.current) clearTimeout(retryTimer.current)
+              setWebError(null)
+              setWebLoaded(false)
+              setRetryCount(c => c + 1)
+              webRef.current?.reload()
+            }}>
+              <Text style={S.retryText}>RETRY NOW</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -243,12 +263,13 @@ export default function GlobeScreen() {
           onError={(e) => {
             const desc = String(e.nativeEvent?.description || 'load error')
             log.error('WebView error', { desc })
-            if (!FRONTEND_URL.startsWith('file://')) setWebError(desc)
+            if (!FRONTEND_URL.startsWith('file://')) { setWebError(desc); scheduleRetry() }
           }}
           onHttpError={(e) => {
             const status = e.nativeEvent?.statusCode
             log.error('WebView HTTP error', { status, url: FRONTEND_URL })
             setWebError(`HTTP ${status}`)
+            scheduleRetry()
           }}
         />
       </View>
