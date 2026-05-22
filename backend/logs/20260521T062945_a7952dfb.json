@@ -1,0 +1,50 @@
+{
+  "run_id": "a7952dfb-b970-48b1-93c4-23976df51add",
+  "timestamp": "2026-05-21T06:29:45.000407",
+  "trigger": "nl_query",
+  "raw_input": "\ud83c\udf0a Major shipping lanes today",
+  "incident_id": null,
+  "workplan": {
+    "goal": "Answer: '\ud83c\udf0a Major shipping lanes today'",
+    "steps": [
+      "1. Classify query intent (Gemini if available)",
+      "2. Route to relevant agent",
+      "3. Generate final answer"
+    ],
+    "estimated_duration_s": null,
+    "agents_involved": [
+      "Orchestrator"
+    ],
+    "generated_at": "2026-05-21T06:29:45.000956"
+  },
+  "observations": [
+    {
+      "key": "intent",
+      "value": "GENERAL",
+      "source": "keyword",
+      "timestamp": "2026-05-21T06:29:45.001425"
+    }
+  ],
+  "reasoning_steps": [],
+  "decision_flow": null,
+  "tool_calls": [],
+  "error_recovery": {
+    "triggered": false,
+    "agent": null,
+    "reason": null,
+    "fallback_strategy": null,
+    "fallback_data_source": null,
+    "degraded_mode": false,
+    "retry_count": 0,
+    "timestamp": null
+  },
+  "before_states": [],
+  "after_states": [],
+  "before_after": [],
+  "dispatch_tickets": [],
+  "reroute_commands": [],
+  "outcome_success": true,
+  "outcome_summary": "Generic query answered",
+  "overall_confidence": 0.65,
+  "total_duration_ms": 1
+}

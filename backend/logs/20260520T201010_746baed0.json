@@ -1,0 +1,50 @@
+{
+  "run_id": "746baed0-d1c3-4ee7-b132-b64cd09a64d4",
+  "timestamp": "2026-05-20T20:10:10.822408",
+  "trigger": "nl_query",
+  "raw_input": "\u26a1 Grid status \u2014 North America",
+  "incident_id": null,
+  "workplan": {
+    "goal": "Answer: '\u26a1 Grid status \u2014 North America'",
+    "steps": [
+      "1. Classify query intent (Gemini if available)",
+      "2. Route to relevant agent",
+      "3. Generate final answer"
+    ],
+    "estimated_duration_s": null,
+    "agents_involved": [
+      "Orchestrator"
+    ],
+    "generated_at": "2026-05-20T20:10:10.822926"
+  },
+  "observations": [
+    {
+      "key": "intent",
+      "value": "GENERAL",
+      "source": "keyword",
+      "timestamp": "2026-05-20T20:10:10.823320"
+    }
+  ],
+  "reasoning_steps": [],
+  "decision_flow": null,
+  "tool_calls": [],
+  "error_recovery": {
+    "triggered": false,
+    "agent": null,
+    "reason": null,
+    "fallback_strategy": null,
+    "fallback_data_source": null,
+    "degraded_mode": false,
+    "retry_count": 0,
+    "timestamp": null
+  },
+  "before_states": [],
+  "after_states": [],
+  "before_after": [],
+  "dispatch_tickets": [],
+  "reroute_commands": [],
+  "outcome_success": true,
+  "outcome_summary": "Generic query answered",
+  "overall_confidence": 0.65,
+  "total_duration_ms": 1
+}

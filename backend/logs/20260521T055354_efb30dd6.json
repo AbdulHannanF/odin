@@ -1,0 +1,50 @@
+{
+  "run_id": "efb30dd6-57fa-468a-b6ed-e8840ef1e5d1",
+  "timestamp": "2026-05-21T05:53:54.309450",
+  "trigger": "nl_query",
+  "raw_input": "Check transmission failures in us",
+  "incident_id": null,
+  "workplan": {
+    "goal": "Answer: 'Check transmission failures in us'",
+    "steps": [
+      "1. Classify query intent (Gemini if available)",
+      "2. Route to relevant agent",
+      "3. Generate final answer"
+    ],
+    "estimated_duration_s": null,
+    "agents_involved": [
+      "Orchestrator"
+    ],
+    "generated_at": "2026-05-21T05:53:54.309789"
+  },
+  "observations": [
+    {
+      "key": "intent",
+      "value": "GENERAL",
+      "source": "keyword",
+      "timestamp": "2026-05-21T05:53:54.309928"
+    }
+  ],
+  "reasoning_steps": [],
+  "decision_flow": null,
+  "tool_calls": [],
+  "error_recovery": {
+    "triggered": false,
+    "agent": null,
+    "reason": null,
+    "fallback_strategy": null,
+    "fallback_data_source": null,
+    "degraded_mode": false,
+    "retry_count": 0,
+    "timestamp": null
+  },
+  "before_states": [],
+  "after_states": [],
+  "before_after": [],
+  "dispatch_tickets": [],
+  "reroute_commands": [],
+  "outcome_success": true,
+  "outcome_summary": "Generic query answered",
+  "overall_confidence": 0.65,
+  "total_duration_ms": 0
+}

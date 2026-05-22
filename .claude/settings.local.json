@@ -13,7 +13,28 @@
       "Bash(node -e ' *)",
       "Bash(timeout 60 npx vite build --minify false)",
       "PowerShell(Invoke-RestMethod \"http://127.0.0.1:8000/api/v1/layers\" | ConvertTo-Json -Depth 3)",
-      "Bash(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/v1/layers/__TRACKED_VAR__)"
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/v1/layers/__TRACKED_VAR__)",
+      "Bash(pip3 --version)",
+      "Bash(npm --version)",
+      "Bash(python3 -m pip --version)",
+      "Read(//usr/bin/**)",
+      "Read(//home/aura/.local/bin/**)",
+      "Bash(Read /tmp/claude-1001/-home-aura-odin/7e3b0974-63ac-40ca-88c4-a844fd5b163d/tasks/bi65rsa9a.output)",
+      "Bash(uv pip *)",
+      "Bash(BACKEND_PORT=4005 ODIN_ENV=development .venv/bin/uvicorn gateway.main:app --host 0.0.0.0 --port 4005 --reload)",
+      "Bash(echo \"Backend PID: $!\")",
+      "Bash(echo \"Frontend PID: $!\")",
+      "Bash(curl -s -w \"\\\\nTotal time: %{time_total}s\\\\n\" http://62.84.187.126:4005/health)",
+      "Bash(curl -s -w \"\\\\nTotal time: %{time_total}s\\\\n\" http://62.84.187.126:4005/api/incidents)",
+      "Bash(python *)",
+      "Bash(python3 *)",
+      "Bash(backend/.venv/bin/python *)",
+      "Bash(../backend/.venv/bin/uvicorn gateway.main:app --host 0.0.0.0 --port 4005 --reload)",
+      "Bash(curl -s http://localhost:4005/api/v1/layers)",
+      "Bash(kill 1124956)",
+      "Bash(/home/aura/odin/backend/.venv/bin/uvicorn gateway.main:app --host 0.0.0.0 --port 4005 --app-dir backend)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(fuser -k 4004/tcp 4006/tcp)"
     ]
   }
 }

@@ -1,0 +1,50 @@
+{
+  "run_id": "1bcf8f39-73a0-4e7e-9dbf-473ef9105e0a",
+  "timestamp": "2026-05-20T20:10:44.471336",
+  "trigger": "nl_query",
+  "raw_input": "\u2708 Busiest air corridors right now",
+  "incident_id": null,
+  "workplan": {
+    "goal": "Answer: '\u2708 Busiest air corridors right now'",
+    "steps": [
+      "1. Classify query intent (Gemini if available)",
+      "2. Route to relevant agent",
+      "3. Generate final answer"
+    ],
+    "estimated_duration_s": null,
+    "agents_involved": [
+      "Orchestrator"
+    ],
+    "generated_at": "2026-05-20T20:10:44.471604"
+  },
+  "observations": [
+    {
+      "key": "intent",
+      "value": "GENERAL",
+      "source": "keyword",
+      "timestamp": "2026-05-20T20:10:44.471767"
+    }
+  ],
+  "reasoning_steps": [],
+  "decision_flow": null,
+  "tool_calls": [],
+  "error_recovery": {
+    "triggered": false,
+    "agent": null,
+    "reason": null,
+    "fallback_strategy": null,
+    "fallback_data_source": null,
+    "degraded_mode": false,
+    "retry_count": 0,
+    "timestamp": null
+  },
+  "before_states": [],
+  "after_states": [],
+  "before_after": [],
+  "dispatch_tickets": [],
+  "reroute_commands": [],
+  "outcome_success": true,
+  "outcome_summary": "Generic query answered",
+  "overall_confidence": 0.65,
+  "total_duration_ms": 0
+}

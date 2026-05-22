@@ -178,5 +178,8 @@ if __name__ == "__main__":
     process_power_plants()
     process_transmission()
     process_substations()
-    process_datacenters()
+    if (CACHE / "datacenters.geojson").exists():
+        process_datacenters()
+    else:
+        print("Skipping datacenters.geojson — file not found")
     print("\nAll done — styled GeoJSON files written to data-cache/")
