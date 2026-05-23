@@ -13,7 +13,10 @@
       "Bash(node -e ' *)",
       "Bash(timeout 60 npx vite build --minify false)",
       "PowerShell(Invoke-RestMethod \"http://127.0.0.1:8000/api/v1/layers\" | ConvertTo-Json -Depth 3)",
-      "Bash(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/v1/layers/__TRACKED_VAR__)"
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/v1/layers/__TRACKED_VAR__)",
+      "PowerShell(Stop-Process *)",
+      "PowerShell(curl -s -o $null -w \"%{http_code}\" http://62.84.187.126:4005/api/grid/state --max-time 5 2>&1)",
+      "PowerShell($ProgressPreference = 'SilentlyContinue'; Invoke-RestMethod -Uri \"http://62.84.187.126:4005/api/v1/layers\" -TimeoutSec 10 | ConvertTo-Json -Depth 3)"
     ]
   }
 }

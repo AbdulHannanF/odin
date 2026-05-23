@@ -32,7 +32,19 @@
       "Bash(node -e ' *)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(k\\) for k in d.get\\('modules',{}\\).keys\\(\\)]\")",
       "Bash(npm install *)",
-      "PowerShell($env:ANDROID_HOME = \"C:\\\\Users\\\\ajsar\\\\AppData\\\\Local\\\\Android\\\\Sdk\"; $env:JAVA_HOME = \"C:\\\\Users\\\\ajsar\\\\jdk17\"; Set-Location \"C:\\\\Users\\\\ajsar\\\\odin\\\\mobile\\\\android\"; .\\\\gradlew.bat assembleRelease --info 2>&1 | Select-String -Pattern \"autolinking|linkLibraries|react-native-gesture|settings.include|Included build|Including project|Registering project\" | Select-Object -First 30)"
+      "PowerShell($env:ANDROID_HOME = \"C:\\\\Users\\\\ajsar\\\\AppData\\\\Local\\\\Android\\\\Sdk\"; $env:JAVA_HOME = \"C:\\\\Users\\\\ajsar\\\\jdk17\"; Set-Location \"C:\\\\Users\\\\ajsar\\\\odin\\\\mobile\\\\android\"; .\\\\gradlew.bat assembleRelease --info 2>&1 | Select-String -Pattern \"autolinking|linkLibraries|react-native-gesture|settings.include|Included build|Including project|Registering project\" | Select-Object -First 30)",
+      "Bash(node -e \"const p=require\\('C:/Users/ajsar/odin/mobile/node_modules/expo-updates/package.json'\\); console.log\\('expo-updates:', p.version\\)\")",
+      "Bash(node -e \"const p=require\\('C:/Users/ajsar/odin/mobile/package.json'\\); console.log\\(JSON.stringify\\(p.dependencies, null,2\\)\\)\")",
+      "Bash(node -e \"const d=[];process.stdin.on\\('data',c=>d.push\\(c\\)\\);process.stdin.on\\('end',\\(\\)=>{const p=JSON.parse\\(d.join\\(''\\)\\);console.log\\(JSON.stringify\\(p.dependencies,null,2\\)\\);}\\)\")",
+      "Bash(npm uninstall *)",
+      "Bash(awk '{print $5, $6, $7, $8, $9}')",
+      "Bash(node -e \"const p = require\\('./node_modules/expo-modules-core/package.json'\\); console.log\\('peerDeps:', JSON.stringify\\(p.peerDependencies, null, 2\\)\\)\")",
+      "Bash(node -e \"const p = require\\('./node_modules/expo/package.json'\\); console.log\\('peerDeps:', JSON.stringify\\(p.peerDependencies, null, 2\\)\\)\")",
+      "Bash(node -e \"const p = require\\('./node_modules/expo/package.json'\\); console.log\\(JSON.stringify\\(p.dependencies, null, 2\\)\\)\")",
+      "Bash(node -e \"const p = require\\('./node_modules/expo-modules-core/package.json'\\); console.log\\(JSON.stringify\\({version: p.version, peerDeps: p.peerDependencies}\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('version:', d['version']\\); print\\('react peer:', d.get\\('peerDependencies', {}\\).get\\('react', 'none'\\)\\)\")",
+      "Bash(node *)",
+      "PowerShell(Get-ChildItem *)"
     ]
   }
 }
