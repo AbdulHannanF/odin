@@ -503,9 +503,9 @@ function RightPanel({ currentTrace, beforeAfter, tickets, incidents, wsConnected
 export default function App() {
   const [activeLayers, setActiveLayers]   = useState({
     infrastructure:true, wind:false, minerals:false,
-    transmission:true, cables:true, gas:true, oil:true, offshore:true,
+    transmission:false, cables:true, gas:true, oil:true, offshore:true,
     datacenters:true,
-    flights:true, ships:true, satellites:false, earthquakes:true, wildfires:true,
+    flights:false, ships:false, satellites:false, earthquakes:true, wildfires:true,
   })
   const globeRef = useRef(null)
   const [selectedAsset, setSelectedAsset] = useState(null)
@@ -520,9 +520,9 @@ export default function App() {
   const { connected: rtConnected, streams: rtStreams } = useRealtime()
 
   const realtimePayload = {
-    flights:     rtStreams.flights?.data,
-    ships:       rtStreams.ships?.data,
-    satellites:  rtStreams.satellites?.data,
+    flights:     activeLayers.flights     ? rtStreams.flights?.data     : undefined,
+    ships:       activeLayers.ships       ? rtStreams.ships?.data       : undefined,
+    satellites:  activeLayers.satellites  ? rtStreams.satellites?.data  : undefined,
     earthquakes: rtStreams.earthquakes?.data,
     weather:     rtStreams.weather?.data,
   }
@@ -578,8 +578,19 @@ export default function App() {
     }
   }, [messages])
 
+  const RT_HEAVY = ['flights', 'ships', 'satellites']
+
   const handleLayerToggle = useCallback((key) => {
-    setActiveLayers(prev => ({ ...prev, [key]: !prev[key] }))
+    setActiveLayers(prev => {
+      const next = { ...prev, [key]: !prev[key] }
+      // Turning on a heavy RT layer disables the other two to prevent OOM
+      if (RT_HEAVY.includes(key) && next[key]) {
+        for (const other of RT_HEAVY) {
+          if (other !== key) next[other] = false
+        }
+      }
+      return next
+    })
   }, [])
 
   const handleQueryResult = useCallback(async (result) => {

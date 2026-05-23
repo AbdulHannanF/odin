@@ -3,6 +3,7 @@ import React, {
 } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import { fetchLayerCached } from '../../utils/layerCache.js'
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const API  = import.meta.env.VITE_API_URL || ''
@@ -203,15 +204,25 @@ const MapView = forwardRef(function MapView(
       //  LAYER ORDER: cables → tx → subs → plants → DCs → events → RT
       // ══════════════════════════════════════════════════════════════════
 
+      // ── Static layer loader — fetches from Cache API, falls back to network ──
+      const loadLayer = async (sourceId, layerName) => {
+        try {
+          const data = await fetchLayerCached(L(layerName))
+          if (!dead) { const s = map.getSource(sourceId); if (s) s.setData(data) }
+        } catch (e) {
+          console.warn(`[MapView] layer "${layerName}" failed:`, e.message)
+        }
+      }
+
       // ── 1. Submarine cables ──────────────────────────────────────────
-      map.addSource('cables', { type: 'geojson', data: L('submarine_cables') })
+      map.addSource('cables', { type: 'geojson', data: EMPTY_FC })
       map.addLayer({ id: 'cables-glow', type: 'line', source: 'cables',
         paint: { 'line-color': '#e879f9', 'line-width': 5, 'line-opacity': 0.10, 'line-blur': 5 } })
       map.addLayer({ id: 'cables-line', type: 'line', source: 'cables',
         paint: { 'line-color': '#e879f9', 'line-width': 1.4, 'line-opacity': 0.62, 'line-dasharray': [4, 2] },
         layout: { 'line-cap': 'round' } })
 
-      map.addSource('cable-ldg', { type: 'geojson', data: L('cable_landing_points') })
+      map.addSource('cable-ldg', { type: 'geojson', data: EMPTY_FC })
       map.addLayer({ id: 'cable-ldg-glow', type: 'circle', source: 'cable-ldg',
         paint: { 'circle-radius': 9, 'circle-color': '#e879f9', 'circle-opacity': 0.20, 'circle-blur': 0.8 } })
       map.addLayer({ id: 'cable-ldg-core', type: 'circle', source: 'cable-ldg',
@@ -265,15 +276,14 @@ const MapView = forwardRef(function MapView(
         const name = await fetch(L('transmission_global_styled'), { method: 'HEAD' })
           .then(r => r.ok ? 'transmission_global_styled' : 'transmission_styled')
           .catch(() => 'transmission_styled')
-        const fc = await fetch(L(name)).then(r => r.json()).catch(() => null)
-        if (fc && !dead) { const s = map.getSource('tx'); if (s) s.setData(fc) }
+        if (!dead) { const s = map.getSource('tx'); if (s) s.setData(L(name)) }
       }
-      const onTxZoom = () => { if (map.getZoom() >= 3) { map.off('zoomend', onTxZoom); loadTx() } }
-      if (map.getZoom() >= 3) loadTx()
+      const onTxZoom = () => { if (map.getZoom() >= 5) { map.off('zoomend', onTxZoom); loadTx() } }
+      if (map.getZoom() >= 5) loadTx()
       else map.on('zoomend', onTxZoom)
 
       // ── 3. Substations ───────────────────────────────────────────────
-      map.addSource('subs', { type: 'geojson', data: L('substations_styled'), generateId: true })
+      map.addSource('subs', { type: 'geojson', data: EMPTY_FC, generateId: true })
       map.addLayer({ id: 'sub-glow', type: 'circle', source: 'subs', minzoom: 4,
         paint: {
           'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, ['*', ['get', 's'], 1.0], 9, ['*', ['get', 's'], 2.0]],
@@ -298,7 +308,7 @@ const MapView = forwardRef(function MapView(
         </div>`))
 
       // ── 4. Power plants (3-layer glow) ───────────────────────────────
-      map.addSource('plants', { type: 'geojson', data: L('power_plants_styled'), generateId: true })
+      map.addSource('plants', { type: 'geojson', data: EMPTY_FC, generateId: true })
       // outer glow — only appears at zoom ≥ 4 to avoid blobs at world view
       map.addLayer({ id: 'plants-glow', type: 'circle', source: 'plants', minzoom: 4,
         paint: {
@@ -342,7 +352,7 @@ const MapView = forwardRef(function MapView(
       })
 
       // ── 5. Datacenters (diamond SDF) ─────────────────────────────────
-      map.addSource('dcs', { type: 'geojson', data: L('datacenters_styled') })
+      map.addSource('dcs', { type: 'geojson', data: EMPTY_FC })
       map.addLayer({ id: 'dc-halo', type: 'circle', source: 'dcs', minzoom: 2,
         paint: {
           'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, ['*', ['get', 's'], 2.0], 9, ['*', ['get', 's'], 3.5]],
@@ -382,9 +392,7 @@ const MapView = forwardRef(function MapView(
           <div class="odin-popup-name">${p.title || 'Active fire'}</div>
           <div class="odin-popup-meta">${p.date || ''}</div>
         </div>`))
-      fetch(L('wildfires')).then(r => r.ok ? r.json() : null).then(fc => {
-        if (fc && !dead) { const s = map.getSource('wildfires'); if (s) s.setData(fc) }
-      }).catch(() => {})
+      loadLayer('wildfires', 'wildfires')
 
       // ── 7. Real-time: earthquakes ─────────────────────────────────────
       map.addSource('rt-earthquakes', { type: 'geojson', data: EMPTY_FC })
@@ -483,6 +491,13 @@ const MapView = forwardRef(function MapView(
           <div class="odin-popup-name">${p.callsign || p.id || 'UNKNOWN'}</div>
           <div class="odin-popup-meta">${p.country || ''} · ALT ${p.alt_m ? Math.round(p.alt_m) + ' m' : '—'} · ${p.velocity_ms ? (p.velocity_ms * 1.944).toFixed(0) + ' kn' : '—'} · ${p.heading_deg != null ? Math.round(p.heading_deg) + '°' : ''}</div>
         </div>`))
+
+      // Load all static layers from cache (or network on first visit)
+      loadLayer('cables',    'submarine_cables')
+      loadLayer('cable-ldg', 'cable_landing_points')
+      loadLayer('subs',      'substations_styled')
+      loadLayer('plants',    'power_plants_styled')
+      loadLayer('dcs',       'datacenters_styled')
 
       setStatus('Map ready — data loading…')
       setMapReady(true)
@@ -612,9 +627,25 @@ const MapView = forwardRef(function MapView(
       flightLastTs.current = Date.now()
     }
 
-    // Ships, satellites, earthquakes — direct setData
-    if (realtime.ships?.items)       setSrc('rt-ships',       pointsToFC(realtime.ships.items))
-    if (realtime.satellites?.items)  setSrc('rt-satellites',  pointsToFC(realtime.satellites.items))
+    // Ships, satellites — only update when active; clear when not
+    if (realtime.ships?.items)
+      setSrc('rt-ships', pointsToFC(realtime.ships.items))
+    else if (realtime.ships === undefined)
+      setSrc('rt-ships', EMPTY_FC)
+
+    if (realtime.satellites?.items)
+      setSrc('rt-satellites', pointsToFC(realtime.satellites.items))
+    else if (realtime.satellites === undefined)
+      setSrc('rt-satellites', EMPTY_FC)
+
+    // Flights: clear internal state when gated off
+    if (realtime.flights === undefined) {
+      flightData.current.clear()
+      flightTrails.current.clear()
+      setSrc('rt-flights', EMPTY_FC)
+      setSrc('rt-flight-trails', EMPTY_FC)
+    }
+
     if (realtime.earthquakes?.items) setSrc('rt-earthquakes', pointsToFC(realtime.earthquakes.items))
   }, [realtime, mapReady])
 

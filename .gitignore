@@ -53,7 +53,8 @@ yarn-error.log*
 *.swo
 *~
 .DS_Store
-
+.claude
+mobile/
 # React Native / Expo
 .expo/
 *.jks

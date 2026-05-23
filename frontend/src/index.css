@@ -586,9 +586,95 @@ body {
 /* ══ RESPONSIVE ══════════════════════════════════════════════════════════ */
 @media (max-width: 1400px) { .app-layout { grid-template-columns: 248px 1fr 340px } }
 @media (max-width: 1100px) { .app-layout { grid-template-columns: 240px 1fr 300px } }
+
 @media (max-width: 880px) {
-  .app-layout { grid-template-columns: 1fr; grid-template-rows: 44px 1fr; grid-template-areas: "header" "map" }
+  /* ── Layout ── */
+  .app-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 36px 1fr;
+    grid-template-areas: "header" "map";
+  }
   .panel-left, .panel-right { display: none }
+
+  /* ── Header: slim, show only essentials ── */
+  .header { padding: 0 8px; height: 36px }
+  .header-logo-sub { display: none }
+  .agent-badge { display: none }
+  .header-divider { display: none }
+  .rt-counter { display: none }
+  .ws-badge { display: none }
+  .header-time { display: none }
+  .status-badge { padding: 2px 6px; font-size: 8px }
+  .basemap-btn { padding: 3px 6px; font-size: 8px; letter-spacing: .08em }
+  .header-logo-mark { width: 22px; height: 22px }
+  .header-logo-text { font-size: 12px; letter-spacing: .18em }
+  .header-status-bar { gap: 7px }
+
+  /* ── NL Query bar: full-width, no chip rows ── */
+  .nl-query-container {
+    width: calc(100% - 14px);
+    left: 7px;
+    transform: none;
+    top: 7px;
+  }
+  .nl-query-form { padding: 6px 8px }
+  .nl-query-input { font-size: 10px }
+  .nl-query-btn { padding: 4px 9px; font-size: 8px; letter-spacing: .08em }
+
+  /* ── Layer controls: horizontal strip at bottom ── */
+  .map-layer-controls {
+    top: auto;
+    bottom: 50px;
+    right: auto;
+    left: 0;
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 3px;
+    padding: 4px 7px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    background: linear-gradient(to right, rgba(7,10,15,.85) 0%, transparent 8%, transparent 92%, rgba(7,10,15,.85) 100%);
+  }
+  .map-layer-controls::-webkit-scrollbar { display: none }
+  .layer-toggle {
+    padding: 4px 8px;
+    font-size: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: .07em;
+  }
+
+  /* ── Status legend: compact, top-left below query bar ── */
+  .map-legend {
+    bottom: auto;
+    top: 54px;
+    left: 7px;
+    padding: 6px 8px;
+  }
+  .legend-title { font-size: 7px; margin-bottom: 4px }
+  .legend-item { font-size: 8px; margin-bottom: 2px; gap: 5px }
+  .legend-dot { width: 5px; height: 5px }
+
+  /* ── Status bar: hide (no room) ── */
+  .map-status-bar { display: none }
+
+  /* ── Asset detail: full-width bottom drawer ── */
+  .asset-detail {
+    right: 8px;
+    left: 8px;
+    bottom: 58px;
+    width: auto;
+  }
+
+  /* ── Query result banner: full-width ── */
+  .query-banner {
+    width: calc(100% - 16px);
+    left: 8px;
+    transform: none;
+    bottom: 58px;
+  }
 }
 
 /* ══ CESIUM GLOBE OVERRIDES ══════════════════════════════════════════════ */

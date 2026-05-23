@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { nlQuery } from '../../api/odinApi.js'
 
 const EXAMPLES = [
@@ -7,9 +7,34 @@ const EXAMPLES = [
   'Who controls lithium supply chains?',
 ]
 
+const MOBILE_HINTS = [
+  'e.g. Best regions for offshore wind?',
+  'e.g. Most vulnerable flood assets?',
+  'e.g. Who controls lithium supply?',
+]
+
+function useIsMobile(breakpoint = 880) {
+  const [mobile, setMobile] = useState(() => window.innerWidth <= breakpoint)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth <= breakpoint)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [breakpoint])
+  return mobile
+}
+
 export default function NLQueryBar({ onResult }) {
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
+  const [hintIdx, setHintIdx] = useState(0)
+  const isMobile = useIsMobile()
+
+  // Cycle through hint placeholders on mobile so users see example queries
+  useEffect(() => {
+    if (!isMobile) return
+    const t = setInterval(() => setHintIdx(i => (i + 1) % MOBILE_HINTS.length), 3500)
+    return () => clearInterval(t)
+  }, [isMobile])
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault()
@@ -32,29 +57,34 @@ export default function NLQueryBar({ onResult }) {
           className="nl-query-input"
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Query ODIN — infrastructure, climate, minerals…"
+          placeholder={isMobile ? MOBILE_HINTS[hintIdx] : 'Query ODIN — infrastructure, climate, minerals…'}
           disabled={loading}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
         />
         <button className="nl-query-btn" type="submit" disabled={loading || !query.trim()}>
-          {loading ? <span className="spinner" style={{ width:12,height:12,borderWidth:1.5 }} /> : 'ANALYZE'}
+          {loading ? <span className="spinner" style={{ width:12,height:12,borderWidth:1.5 }} /> : 'ASK'}
         </button>
       </form>
-      <div style={{ display:'flex', gap:4, marginTop:5, justifyContent:'center', flexWrap:'wrap' }}>
-        {EXAMPLES.map((q, i) => (
-          <button
-            key={i}
-            onClick={() => setQuery(q)}
-            style={{
-              padding:'2px 10px', background:'rgba(8,10,14,.85)',
-              border:'1px solid rgba(255,255,255,.07)', color:'rgba(255,255,255,.35)',
-              fontSize:10, cursor:'pointer', fontFamily:"'IBM Plex Mono',monospace",
-              transition:'all .15s', backdropFilter:'blur(8px)',
-            }}
-            onMouseEnter={e => { e.target.style.color='var(--amber)'; e.target.style.borderColor='var(--amber-d)' }}
-            onMouseLeave={e => { e.target.style.color='rgba(255,255,255,.35)'; e.target.style.borderColor='rgba(255,255,255,.07)' }}
-          >{q}</button>
-        ))}
-      </div>
+      {!isMobile && (
+        <div style={{ display:'flex', gap:4, marginTop:5, justifyContent:'center', flexWrap:'wrap' }}>
+          {EXAMPLES.map((q, i) => (
+            <button
+              key={i}
+              onClick={() => setQuery(q)}
+              style={{
+                padding:'2px 10px', background:'rgba(8,10,14,.85)',
+                border:'1px solid rgba(255,255,255,.07)', color:'rgba(255,255,255,.35)',
+                fontSize:10, cursor:'pointer', fontFamily:"'IBM Plex Mono',monospace",
+                transition:'all .15s', backdropFilter:'blur(8px)',
+              }}
+              onMouseEnter={e => { e.target.style.color='var(--amber)'; e.target.style.borderColor='var(--amber-d)' }}
+              onMouseLeave={e => { e.target.style.color='rgba(255,255,255,.35)'; e.target.style.borderColor='rgba(255,255,255,.07)' }}
+            >{q}</button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
